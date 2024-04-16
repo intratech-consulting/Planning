@@ -79,4 +79,7 @@ if __name__ == '__main__':
 '''
 To Do:
 - Modify the code so we can check if a calendar already exists
+python -m venv venv 
+pip install google-api
+pip install google-auth-oauthlib
 '''
