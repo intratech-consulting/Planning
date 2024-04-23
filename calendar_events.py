@@ -48,13 +48,23 @@ def create_calendar():
     created_calendar = service.calendars().insert(body=calendar).execute()
     print('Calendar created:', created_calendar['id'])
 
+    # Share the calendar publicly
+    rule = {
+        'scope': {
+            'type': 'default',
+        },
+        'role': 'reader'  # Allow anyone to view the calendar
+    }
+    service.acl().insert(calendarId=created_calendar['id'], body=rule).execute()
+    print('Calendar shared publicly')
+
     # Add service account as an owner of the calendar
     rule = {
         'scope': {
             'type': 'user',
             'value': SERVICE_ACCOUNT_EMAIL,
         },
-        'role': 'owner'  # or 'writer', 'reader' as needed
+        'role': 'owner'  # Service account has ownership access
     }
     service.acl().insert(calendarId=created_calendar['id'], body=rule).execute()
     print('Permissions granted for service account:', SERVICE_ACCOUNT_EMAIL)
@@ -96,7 +106,7 @@ def create_calendar():
         service.events().insert(calendarId=created_calendar['id'], body=event_body).execute()
         print('Event created for calendar:', created_calendar['id'])
 
-    return created_calendar['id'], f"https://calendar.google.com/calendar/embed?src={created_calendar['id']}"  # Return the ID of the newly created calendar and its embed link
+    return created_calendar['id'], f"https://calendar.google.com/calendar/embed?src={created_calendar['id']}&ctz=Europe%2FBrussels"  # Return the ID of the newly created calendar and its embed link
 
 if __name__ == '__main__':
     calendar_id, embed_link = create_calendar()
