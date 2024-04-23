@@ -34,18 +34,29 @@ def create_calendar():
     # Check if the calendar already exists
     calendar_list = service.calendarList().list().execute()
     for calendar_entry in calendar_list['items']:
-        if calendar_entry['summary'] == 'Integration Project 2':
+        if calendar_entry['summary'] == 'Integration Project 7':
             print('Calendar already exists:', calendar_entry['id'])
             return calendar_entry['id'], f"https://calendar.google.com/calendar/embed?src={calendar_entry['id']}"  # Return the existing calendar ID and embed link
 
     # Create a new calendar
     calendar = {
-        'summary': 'Integration Project',
+        'summary': 'Integration Project 5',
         'timeZone': 'Europe/Brussels'
     }
 
     created_calendar = service.calendars().insert(body=calendar).execute()
     print('Calendar created:', created_calendar['id'])
+
+    # Add service account as an owner of the calendar
+    rule = {
+        'scope': {
+            'type': 'user',
+            'value': SERVICE_ACCOUNT_EMAIL,
+        },
+        'role': 'owner'  # or 'writer', 'reader' as needed
+    }
+    service.acl().insert(calendarId=created_calendar['id'], body=rule).execute()
+    print('Permissions granted for service account:', SERVICE_ACCOUNT_EMAIL)
 
     # Parse XML file
     tree = ET.parse('events.xml')
