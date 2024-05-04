@@ -40,7 +40,7 @@ user_xml = """
 
 # Publish the XML user-object as a message
 channel.basic_publish(
-    exchange='',
+    exchange='amq.topic',
     routing_key='user',
     body=user_xml  # Set the message body as the serialized XML string
 )
