@@ -2,26 +2,10 @@ from googleapiclient.discovery import build
 from google.oauth2 import service_account
 import datetime
 import os.path
-import xml.etree.ElementTree as ET
-import mysql.connector
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
-
-# Get MySQL credentials
-mysql_host = os.getenv("MYSQL_HOST")
-mysql_user = os.getenv("MYSQL_USER")
-mysql_password = os.getenv("MYSQL_PASSWORD")
-mysql_database = os.getenv("MYSQL_DATABASE")
-
-# Establish a connection to your MySQL database
-mydb = mysql.connector.connect(
-    host=mysql_host,
-    user=mysql_user,
-    password=mysql_password,
-    database=mysql_database
-)
 
 # Email of the service account
 SERVICE_ACCOUNT_EMAIL = os.getenv("SERVICE_ACCOUNT_EMAIL")
@@ -67,14 +51,6 @@ def create_calendar():
     created_calendar = service.calendars().insert(body=calendar).execute()
     print('Calendar created:', created_calendar['id'])
 
-    # Save the calendarID to MySQL database
-    mycursor = mydb.cursor()
-    sql = "INSERT INTO calendar_table (calendar_id) VALUES (%s)"
-    val = (created_calendar['id'],)
-    mycursor.execute(sql, val)
-    mydb.commit()
-    print(mycursor.rowcount, "record inserted.")
-
     # Share the calendar publicly
     rule = {
         'scope': {
@@ -96,44 +72,66 @@ def create_calendar():
     service.acl().insert(calendarId=created_calendar['id'], body=rule).execute()
     print('Permissions granted for service account:', SERVICE_ACCOUNT_EMAIL)
 
-    # Parse XML file
-    tree = ET.parse('events.xml')
-    root = tree.getroot()
+    # Define start and end dates (assuming they are defined elsewhere in your code)
+    start_date = datetime.datetime(2024, 5, 1)  # Example start date
+    end_date = datetime.datetime(2024, 5, 31)   # Example end date
 
-    for event in root.findall('event'):
-        # Extract event details
-        date = event.find('date').text
-        start_time = event.find('start_time').text
-        end_time = event.find('end_time').text
-        location = event.find('location').text
-        speaker_name = event.find('speaker/name').text
-        speaker_email = event.find('speaker/email').text
-        speaker_company = event.find('speaker/company').text
-        description = event.find('description').text
+    # Fetch events from the public calendar within the time range
+    public_calendar_events = fetch_events(service, start_date, end_date)
 
-        # Create event
-        event_body = {
-            'summary': description,
-            'location': location,
-            'description': f'Speaker: {speaker_name} ({speaker_company})\nEmail: {speaker_email}',
-            'start': {
-                'dateTime': f'{date}T{start_time}:00',
-                'timeZone': 'Europe/Brussels',
-            },
-            'end': {
-                'dateTime': f'{date}T{end_time}:00',
-                'timeZone': 'Europe/Brussels',
-            },
-            'reminders': {
-                'useDefault': True,
-            },
-        }
+    if public_calendar_events is not None:
+        if public_calendar_events:
+            for event in public_calendar_events:
+                summary = event['summary']
+                start = event['start'].get('dateTime', event['start'].get('date'))
+                end = event['end'].get('dateTime', event['end'].get('date'))
+                location = event.get('location', 'N/A')
+                description = event.get('description', 'N/A')
 
-        # Add event to the newly created or existing calendar
-        service.events().insert(calendarId=created_calendar['id'], body=event_body).execute()
-        print('Event created for calendar:', created_calendar['id'])
+                # Create event
+                event_body = {
+                    'summary': summary,
+                    'location': location,
+                    'description': description,
+                    'start': {
+                        'dateTime': start,
+                        'timeZone': 'Europe/Brussels',
+                    },
+                    'end': {
+                        'dateTime': end,
+                        'timeZone': 'Europe/Brussels',
+                    },
+                    'reminders': {
+                        'useDefault': True,
+                    },
+                }
+
+                # Add event to the newly created calendar
+                service.events().insert(calendarId=created_calendar['id'], body=event_body).execute()
+                print('Event created for calendar:', created_calendar['id'])
+        else:
+            print("No events found in the public calendar within the specified time range.")
+    else:
+        print("Failed to fetch events from the public calendar.")
 
     return created_calendar['id'], f"https://calendar.google.com/calendar/embed?src={created_calendar['id']}&ctz=Europe%2FBrussels"  # Return the ID of the newly created calendar and its embed link
+
+def fetch_events(calendar_service, start_date, end_date):
+    try:
+       # Fetch events from Google Calendar
+        events_result = calendar_service.events().list(
+        calendarId='9ecbb3026111b91a9ce21bfed88d67b95783a5a418c6d82aaa220776eb70f5d3@group.calendar.google.com',
+        timeMin=start_date.isoformat() + 'Z',
+        timeMax=end_date.isoformat() + 'Z',
+        singleEvents=True,
+        ).execute()
+
+        events = events_result.get('items', [])
+        
+        return events
+    except Exception as e:
+        print("An error occurred:", e)
+        return None
 
 if __name__ == '__main__':
     calendar_id, embed_link = create_calendar()
