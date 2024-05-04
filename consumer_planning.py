@@ -8,7 +8,7 @@ connection = pika.BlockingConnection(pika.ConnectionParameters(host='10.2.160.51
 channel = connection.channel()
 
 # Queue declaration
-channel.queue_declare(queue='user', durable=True)
+channel.queue_declare(queue='planning', durable=True)
 
 # Database connection parameters
 db_host = '172.17.0.6' 
@@ -80,5 +80,3 @@ except KeyboardInterrupt:
     print('Interrupted. Closing connection.')
     connection.close()
 
-
-    #test commit
