@@ -125,13 +125,17 @@ XSD_SCHEMAS = {
 }
 
 # Function to validate XML against embedded XSD schema
-def validate_xml(xml_str, xsd_str):
-    xmlschema = etree.XMLSchema(etree.fromstring(xsd_str))
-    xmlparser = etree.XMLParser(schema=xmlschema)
-    
+def validate_xml(xml_str):
     try:
-        etree.fromstring(xml_str, xmlparser)
-        return True, None  # Valid XML
+        root = etree.fromstring(xml_str)
+        if root.tag in XSD_SCHEMAS:
+            xsd_str = XSD_SCHEMAS[root.tag]
+            xmlschema = etree.XMLSchema(etree.fromstring(xsd_str))
+            xmlparser = etree.XMLParser(schema=xmlschema)
+            etree.fromstring(xml_str, xmlparser)
+            return True, None  # Valid XML
+        else:
+            return False, f"No schema available for the received XML root element '{root.tag}'"
     except etree.XMLSchemaError as e:
         return False, str(e)  # Invalid XML
 
@@ -139,18 +143,17 @@ def validate_xml(xml_str, xsd_str):
 def callback(ch, method, properties, body):
     try:
         # Decode message body (assuming it's in UTF-8)
-        message = body.decode('utf-8')
-        # Extract XML type and content from message
-        xml_type, xml_content = message.split(':', 1)
-        if xml_type in XSD_SCHEMAS:
-            xsd_str = XSD_SCHEMAS[xml_type]
-            is_valid, error_message = validate_xml(xml_content, xsd_str)
-            if is_valid:
-                print(f"{xml_type.capitalize()} XML is valid.")
-            else:
-                print(f"{xml_type.capitalize()} XML validation failed: {error_message}")
+        xml_content = body.decode('utf-8')
+        
+        # Validate the XML based on its root element
+        is_valid, error_message = validate_xml(xml_content)
+        
+        if is_valid:
+            print(f"Received valid XML:")
+            print(xml_content)
         else:
-            print(f"Unknown XML type: {xml_type}")
+            print(f"Received invalid XML: {error_message}")
+    
     except Exception as e:
         print(f"Error processing message: {str(e)}")
 
