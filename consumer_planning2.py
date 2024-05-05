@@ -160,7 +160,7 @@ connection = pika.BlockingConnection(pika.ConnectionParameters('10.2.160.51', cr
 channel = connection.channel()
 
 # Declare the queue
-channel.queue_declare(queue='planning')
+channel.queue_declare(queue='planning', durable=True)
 
 # Set up consumer to receive messages from the queue
 channel.basic_consume(queue='planning', on_message_callback=callback, auto_ack=True)
