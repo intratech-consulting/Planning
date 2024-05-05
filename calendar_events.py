@@ -3,6 +3,7 @@ from google.oauth2 import service_account
 import datetime
 import os.path
 from dotenv import load_dotenv
+import mysql.connector
 
 # Load environment variables from .env file
 load_dotenv()
@@ -12,6 +13,27 @@ SERVICE_ACCOUNT_EMAIL = os.getenv("SERVICE_ACCOUNT_EMAIL")
 
 # If modifying these scopes, specify the required scopes for accessing Google Calendar.
 SCOPES = ['https://www.googleapis.com/auth/calendar']
+
+# MySQL Database Connection
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_DATABASE = os.getenv("DB_DATABASE")
+
+def connect_to_mysql():
+    try:
+        # Connect to MySQL
+        connection = mysql.connector.connect(
+            host=DB_HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DB_DATABASE
+        )
+        print("Connected to MySQL database")
+        return connection
+    except mysql.connector.Error as e:
+        print("Error connecting to MySQL:", e)
+        return None
 
 def create_calendar():
     """Create a new calendar and add events to it."""
@@ -35,6 +57,11 @@ def create_calendar():
 
     service = build('calendar', 'v3', credentials=creds)
 
+    # MySQL Connection
+    mysql_connection = connect_to_mysql()
+    if mysql_connection is None:
+        return None, None
+
     # Check if the calendar already exists
     calendar_list = service.calendarList().list().execute()
     for calendar_entry in calendar_list['items']:
@@ -50,6 +77,7 @@ def create_calendar():
 
     created_calendar = service.calendars().insert(body=calendar).execute()
     print('Calendar created:', created_calendar['id'])
+    calendar_id = created_calendar['id']
 
     # Share the calendar publicly
     rule = {
@@ -58,7 +86,7 @@ def create_calendar():
         },
         'role': 'reader'  # Allow anyone to view the calendar
     }
-    service.acl().insert(calendarId=created_calendar['id'], body=rule).execute()
+    service.acl().insert(calendarId=calendar_id, body=rule).execute()
     print('Calendar shared publicly')
 
     # Add service account as an owner of the calendar
@@ -69,7 +97,7 @@ def create_calendar():
         },
         'role': 'owner'  # Service account has ownership access
     }
-    service.acl().insert(calendarId=created_calendar['id'], body=rule).execute()
+    service.acl().insert(calendarId=calendar_id, body=rule).execute()
     print('Permissions granted for service account:', SERVICE_ACCOUNT_EMAIL)
 
     # Define start and end dates (assuming they are defined elsewhere in your code)
@@ -107,14 +135,26 @@ def create_calendar():
                 }
 
                 # Add event to the newly created calendar
-                service.events().insert(calendarId=created_calendar['id'], body=event_body).execute()
-                print('Event created for calendar:', created_calendar['id'])
+                service.events().insert(calendarId=calendar_id, body=event_body).execute()
+                print('Event created for calendar:', calendar_id)
         else:
             print("No events found in the public calendar within the specified time range.")
     else:
         print("Failed to fetch events from the public calendar.")
 
-    return created_calendar['id'], f"https://calendar.google.com/calendar/embed?src={created_calendar['id']}&ctz=Europe%2FBrussels"  # Return the ID of the newly created calendar and its embed link
+    # Insert calendar link into the USER table
+    try:
+        cursor = mysql_connection.cursor()
+        insert_query = "INSERT INTO USER (calendarlink) VALUES (%s)"
+        calendar_link = f"https://calendar.google.com/calendar/embed?src={calendar_id}&ctz=Europe%2FBrussels"
+        cursor.execute(insert_query, (calendar_link,))
+        mysql_connection.commit()
+        print("Calendar link inserted into USER table")
+    except mysql.connector.Error as e:
+        print("Error inserting calendar link into USER table:", e)
+        mysql_connection.rollback()
+
+    return calendar_id, f"https://calendar.google.com/calendar/embed?src={calendar_id}&ctz=Europe%2FBrussels"  # Return the ID of the newly created calendar and its embed link
 
 def fetch_events(calendar_service, start_date, end_date):
     try:
