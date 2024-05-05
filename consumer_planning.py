@@ -11,13 +11,13 @@ channel = connection.channel()
 channel.queue_declare(queue='planning', durable=True)
 
 # Database connection parameters
-db_host = '172.17.0.6' 
+db_host = '172.17.0.6'
 db_user = 'root'
 db_password = 'password'
 db_name = 'test1'
 
-# Function to insert user data from XML into database
-def insert_user_into_db(xml_data):
+# Function to insert XML data into corresponding database table (users or companies)
+def insert_xml_data_into_db(xml_data):
     try:
         # Establish database connection
         db_connection = pymysql.connect(host=db_host, user=db_user, password=db_password, database=db_name)
@@ -26,50 +26,75 @@ def insert_user_into_db(xml_data):
         # Parse XML data
         root = ET.fromstring(xml_data)
 
-        # Extract user information from XML
-        user_id = root.find('user_id').text.strip() if root.find('user_id') is not None and root.find('user_id').text is not None else None
-        first_name = root.find('first_name').text.strip() if root.find('first_name') is not None and root.find('first_name').text is not None else None
-        last_name = root.find('last_name').text.strip() if root.find('last_name') is not None and root.find('last_name').text is not None else None
-        email = root.find('email').text.strip() if root.find('email') is not None and root.find('email').text is not None else None
-        telephone = root.find('telephone').text.strip() if root.find('telephone') is not None and root.find('telephone').text is not None else None
-        birthday = root.find('birthday').text.strip() if root.find('birthday') is not None and root.find('birthday').text is not None else None
-        country = root.find('address/country').text.strip() if root.find('address/country') is not None and root.find('address/country').text is not None else None
-        state = root.find('address/state').text.strip() if root.find('address/state') is not None and root.find('address/state').text is not None else None
-        city = root.find('address/city').text.strip() if root.find('address/city') is not None and root.find('address/city').text is not None else None
-        zip_code = root.find('address/zip').text.strip() if root.find('address/zip') is not None and root.find('address/zip').text is not None else None
-        street = root.find('address/street').text.strip() if root.find('address/street') is not None and root.find('address/street').text is not None else None
-        house_number = root.find('address/house_number').text.strip() if root.find('address/house_number') is not None and root.find('address/house_number').text is not None else None
-        company_email = root.find('company_email').text.strip() if root.find('company_email') is not None and root.find('company_email').text is not None else None
+        # Determine message type (user or company)
+        if root.tag == 'user':
+            table_name = 'users'
+        elif root.tag == 'company':
+            table_name = 'companies'
+        elif root.tag == 'event':
+            table_name = 'events'
+        else:
+            print(f"Unknown message type: {root.tag}")
+            return
 
-        # Insert user data into database
-        sql = """
-            INSERT INTO users (user_id, first_name, last_name, email, telephone, birthday, country, state, city, zip_code, street, house_number, company_email)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """
-        cursor.execute(sql, (user_id, first_name, last_name, email, telephone, birthday, country, state, city, zip_code, street, house_number, company_email))
+        # Extract common fields
+        routing_key = root.find('routing_key').text.strip()
+        address = root.find('address')
+        country = address.find('country').text.strip()
+        state = address.find('state').text.strip()
+        city = address.find('city').text.strip()
+        zip_code = address.find('zip').text.strip()
+        street = address.find('street').text.strip()
+        house_number = address.find('house_number').text.strip()
+
+        # Extract specific fields based on message type
+        if table_name == 'users':
+            user_id = root.find('user_id').text.strip()
+            first_name = root.find('first_name').text.strip()
+            last_name = root.find('last_name').text.strip()
+            email = root.find('email').text.strip()
+            telephone = root.find('telephone').text.strip()
+            birthday = root.find('birthday').text.strip()
+            company_email = root.find('company_email').text.strip() if root.find('company_email') is not None else None
+
+            sql = f"""
+                INSERT INTO user (user_id, first_name, last_name, email, telephone, birthday, country, state, city, zip_code, street, house_number, company_email, routing_key)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql, (user_id, first_name, last_name, email, telephone, birthday, country, state, city, zip_code, street, house_number, company_email, routing_key))
+        elif table_name == 'companies':
+            company_id = root.find('id').text.strip()
+            name = root.find('name').text.strip()
+            email = root.find('email').text.strip() if root.find('email') is not None else None
+            telephone = root.find('telephone').text.strip() if root.find('telephone') is not None else None
+            logo = root.find('logo').text.strip() if root.find('logo') is not None else None
+            company_type = root.find('type').text.strip()
+            invoice = root.find('invoice').text.strip()
+
+            sql = f"""
+                INSERT INTO company (company_id, name, email, telephone, logo, country, state, city, zip_code, street, house_number, company_type, invoice, routing_key)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql, (company_id, name, email, telephone, logo, country, state, city, zip_code, street, house_number, company_type, invoice, routing_key))
 
         db_connection.commit()
-        print("User data inserted into database successfully.")
+        print(f"{root.tag.capitalize()} data inserted into database successfully.")
 
     except Exception as e:
-        print("Error inserting user data into database:", e)
+        print(f"Error inserting {root.tag.capitalize()} data into database:", e)
     finally:
         cursor.close()
         db_connection.close()
-
 
 # Callback function to process incoming messages
 def callback(ch, method, properties, body):
     xml_message = body.decode('utf-8')  # Decode message from bytes to string
     print(' [x] Received XML message:', xml_message)
 
-    # Call function to insert user data into database
-    insert_user_into_db(xml_message)
+    # Call function to insert XML data into corresponding database table
+    insert_xml_data_into_db(xml_message)
 
-channel.basic_consume(
-  'user',
-  callback,
-  auto_ack=True)
+channel.basic_consume('planning', callback, auto_ack=True)
 
 print(' [*] Waiting for XML messages. To exit, press CTRL+C')
 
