@@ -145,9 +145,9 @@ def create_calendar():
     # Insert calendar link into the USER table
     try:
         cursor = mysql_connection.cursor()
-        insert_query = "INSERT INTO USER (calendarlink) VALUES (%s)"
+        insert_query = "INSERT INTO USER (firstname, lastname, email, status, calendarlink) VALUES (%s, %s, %s, %s, %s)"
         calendar_link = f"https://calendar.google.com/calendar/embed?src={calendar_id}&ctz=Europe%2FBrussels"
-        cursor.execute(insert_query, (calendar_link,))
+        cursor.execute(insert_query, ('John', 'Doe', 'john.doe@example.com', 1, calendar_link))
         mysql_connection.commit()
         print("Calendar link inserted into USER table")
     except mysql.connector.Error as e:
