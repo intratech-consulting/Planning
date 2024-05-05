@@ -139,7 +139,7 @@ def save_user_to_database(root_element):
         conn = get_database_connection()
         cursor = conn.cursor()
 
-        sql = "INSERT INTO users (UserId, First_name, Last_name, Email, CompanyId) VALUES (%s, %s, %s, %s, %s)"
+        sql = "INSERT INTO User (UserId, First_name, Last_name, Email, CompanyId) VALUES (%s, %s, %s, %s, %s)"
         values = (user_id, first_name, last_name, email, company_id)
         cursor.execute(sql, values)
 
@@ -160,7 +160,7 @@ def save_company_to_database(root_element):
         conn = get_database_connection()
         cursor = conn.cursor()
 
-        sql = "INSERT INTO companies (CompanyId, Name, Email) VALUES (%s, %s, %s)"
+        sql = "INSERT INTO Company (CompanyId, Name, Email) VALUES (%s, %s, %s)"
         values = (company_id, name, email)
         cursor.execute(sql, values)
 
@@ -195,8 +195,8 @@ def callback(ch, method, properties, body):
         print(f"Error processing message: {str(e)}")
 
 # Connect to RabbitMQ server
-credentials = pika.PlainCredentials(os.getenv('RABBITMQ_USER'), os.getenv('RABBITMQ_PASSWORD'))
-connection = pika.BlockingConnection(pika.ConnectionParameters(os.getenv('RABBITMQ_HOST'), credentials=credentials))
+credentials = pika.PlainCredentials('user', 'password')
+connection = pika.BlockingConnection(pika.ConnectionParameters(host='10.2.160.51', credentials=credentials))
 channel = connection.channel()
 
 # Declare the queue
