@@ -67,7 +67,7 @@ def create_calendar(user_id):
     select_query = "SELECT CalendarId FROM User WHERE UserId = %s"
     cursor.execute(select_query, (user_id,))
     result = cursor.fetchone()
-    if result:
+    if result and result[0]:
         calendar_id = result[0]
         print("User has an existing calendar. Using calendar ID:", calendar_id)
     else:
