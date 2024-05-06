@@ -14,7 +14,9 @@ RUN pip install --no-cache-dir \
     google-api-python-client google-auth-httplib2 google-auth-oauthlib \
     lxml \
     mysql-connector-python \
-    python-dotenv
+    python-dotenv \
+    python-dateutil \
+    pytz
 
 # Run the Python script when the container starts
 CMD [ "python3", "heartbeat_planning.py" ]
