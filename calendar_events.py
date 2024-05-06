@@ -134,6 +134,7 @@ def add_event_from_database(event_id, calendar_service, calendar_id, mysql_conne
                 'end': {
                     'dateTime': event_details[3].isoformat(),  # Assuming end datetime is at index 3
                 },
+                'timeZone': 'Europe/Brussels',
                 'location': event_details[4],  # Assuming location is at index 4
                 'description': event_details[5]  # Assuming description is at index 5
             }
