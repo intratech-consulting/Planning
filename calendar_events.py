@@ -92,7 +92,8 @@ def create_calendar(user_id):
             mysql_connection.rollback()
 
     # Generate calendar link
-    calendar_link = f"<a href='https://calendar.google.com/calendar/u/0?cid={calendar_id}'>Click here to view calendar</a>"
+    calendar_link = f"https://calendar.google.com/calendar/embed?src={calendar_id}&ctz=Europe%2FBrussels"
+    
 
     # Save calendar link to the user
     update_query = "UPDATE User SET CalendarLink = %s WHERE UserId = %s"
