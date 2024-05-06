@@ -105,25 +105,16 @@ def create_calendar(user_id):
         service.acl().insert(calendarId=calendar_id, body=rule).execute()
         print('Permissions granted for service account:', SERVICE_ACCOUNT_EMAIL)
 
-        # Save calendar ID to the database
+        # Save calendar ID and link to the database
         try:
-            insert_query = "INSERT INTO User (UserId, CalendarId) VALUES (%s, %s)"
-            cursor.execute(insert_query, (user_id, calendar_id))
+            insert_query = "INSERT INTO User (UserId, CalendarId, CalendarLink) VALUES (%s, %s, %s)"
+            calendar_link = f"https://calendar.google.com/calendar/embed?src={calendar_id}&ctz=Europe%2FBrussels"
+            cursor.execute(insert_query, (user_id, calendar_id, calendar_link))
             mysql_connection.commit()
-            print("Calendar ID saved to the database for user:", user_id)
+            print("Calendar ID and link saved to the database for user:", user_id)
         except mysql.connector.Error as e:
-            print("Error inserting calendar ID into database:", e)
+            print("Error inserting calendar ID and link into database:", e)
             mysql_connection.rollback()
-
-    # Generate calendar link
-    calendar_link = f"https://calendar.google.com/calendar/embed?src={calendar_id}&ctz=Europe%2FBrussels"
-    
-
-    # Save calendar link to the user
-    update_query = "UPDATE User SET CalendarLink = %s WHERE UserId = %s"
-    cursor.execute(update_query, (calendar_link, user_id))
-    mysql_connection.commit()
-    print("Calendar link saved to the database for user:", user_id)
 
     # Fetch event with ID 1 from the database and add it to the calendar
     add_event_from_database(1, service, calendar_id, mysql_connection)
@@ -223,6 +214,6 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection):
         print("An error occurred:", e)
 
 if __name__ == '__main__':
-    user_id_from_rabbitmq = 4  # Replace with actual user ID received from RabbitMQ
+    user_id_from_rabbitmq = 5 # Replace with actual user ID received from RabbitMQ
     calendar_link = create_calendar(user_id_from_rabbitmq)
     print('Calendar Link:', calendar_link)
