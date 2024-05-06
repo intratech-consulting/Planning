@@ -17,4 +17,4 @@ RUN pip install --no-cache-dir \
     python-dotenv
 
 # Run the Python script when the container starts
-CMD [ "python3", "heartbeat_planning.py" ]
+CMD [ "python3", "heartbeat_planning.py", "consumer_planning2.py" ]
