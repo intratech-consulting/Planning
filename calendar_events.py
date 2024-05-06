@@ -77,19 +77,41 @@ def create_calendar(user_id):
             'timeZone': 'Europe/Brussels'
         }
 
-        created_calendar = service.calendars().insert(body=calendar).execute()
-        print('Calendar created:', created_calendar['id'])
-        calendar_id = created_calendar['id']
+    # Share the calendar publicly
+    rule = {
+        'scope': {
+            'type': 'default',
+        },
+        'role': 'reader'  # Allow anyone to view the calendar
+    }
+    service.acl().insert(calendarId=calendar_id, body=rule).execute()
+    print('Calendar shared publicly')
 
-        # Save calendar ID to the database
-        try:
-            insert_query = "INSERT INTO User (UserId, CalendarId) VALUES (%s, %s)"
-            cursor.execute(insert_query, (user_id, calendar_id))
-            mysql_connection.commit()
-            print("Calendar ID saved to the database for user:", user_id)
-        except mysql.connector.Error as e:
-            print("Error inserting calendar ID into database:", e)
-            mysql_connection.rollback()
+    # Add service account as an owner of the calendar
+    rule = {
+        'scope': {
+            'type': 'user',
+            'value': SERVICE_ACCOUNT_EMAIL,
+        },
+        'role': 'owner'  # Service account has ownership access
+    }
+
+    service.acl().insert(calendarId=calendar_id, body=rule).execute()
+    print('Permissions granted for service account:', SERVICE_ACCOUNT_EMAIL)
+
+
+    created_calendar = service.calendars().insert(body=calendar).execute()
+    print('Calendar created:', created_calendar['id'])
+    calendar_id = created_calendar['id']
+    # Save calendar ID to the database
+    try:
+        insert_query = "INSERT INTO User (UserId, CalendarId) VALUES (%s, %s)"
+        cursor.execute(insert_query, (user_id, calendar_id))
+        mysql_connection.commit()
+        print("Calendar ID saved to the database for user:", user_id)
+    except mysql.connector.Error as e:
+        print("Error inserting calendar ID into database:", e)
+        mysql_connection.rollback()
 
     # Generate calendar link
     calendar_link = f"https://calendar.google.com/calendar/embed?src={calendar_id}&ctz=Europe%2FBrussels"
