@@ -103,11 +103,11 @@ def create_calendar(user_id):
 
     return calendar_id
 
-def fetch_events(calendar_service, start_date, end_date, calendar_id, mysql_connection):
+def fetch_events(calendar_service, start_date, end_date, mysql_connection):
     try:
         # Fetch events from Google Calendar
         events_result = calendar_service.events().list(
-            calendarId=calendar_id,
+            calendarId= "9ecbb3026111b91a9ce21bfed88d67b95783a5a418c6d82aaa220776eb70f5d3@group.calendar.google.com",
             timeMin=start_date.isoformat() + 'Z',
             timeMax=end_date.isoformat() + 'Z',
             singleEvents=True,
