@@ -79,10 +79,10 @@ def create_calendar(user_id):
             'accessRole': 'owner',
             'role': 'owner'
         }
-
+        
         created_calendar = service.calendars().insert(body=calendar).execute()
+        print('Calendar created:', created_calendar['id'])
         calendar_id = created_calendar['id']
-        print('Calendar created:', calendar_id)
 
         # Share the calendar publicly
         rule = {
@@ -116,7 +116,8 @@ def create_calendar(user_id):
             mysql_connection.rollback()
 
     # Generate calendar link
-    calendar_link = f"https://calendar.google.com/calendar/u/0?cid={calendar_id}"
+    calendar_link = f"https://calendar.google.com/calendar/embed?src={calendar_id}&ctz=Europe%2FBrussels"
+    
 
     # Save calendar link to the user
     update_query = "UPDATE User SET CalendarLink = %s WHERE UserId = %s"
@@ -157,10 +158,11 @@ def add_event_from_database(event_id, calendar_service, calendar_id, mysql_conne
                 'end': {
                     'dateTime': event_details[3].isoformat(),  # Assuming end datetime is at index 3
                 },
+                'timeZone': 'Europe/Brussels',
                 'location': event_details[4],  # Assuming location is at index 4
                 'description': event_details[5]  # Assuming description is at index 5
             }
-
+            print(event_details[1])
             # Insert event into Google Calendar
             created_event = calendar_service.events().insert(calendarId=calendar_id, body=event_body).execute()
             print('Event added to Google Calendar:', created_event['id'])
@@ -221,6 +223,6 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection):
         print("An error occurred:", e)
 
 if __name__ == '__main__':
-    user_id_from_rabbitmq = 1  # Replace with actual user ID received from RabbitMQ
+    user_id_from_rabbitmq = 4  # Replace with actual user ID received from RabbitMQ
     calendar_link = create_calendar(user_id_from_rabbitmq)
     print('Calendar Link:', calendar_link)
