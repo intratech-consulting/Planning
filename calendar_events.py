@@ -74,48 +74,49 @@ def create_calendar(user_id):
         # Create a new calendar
         calendar = {
             'summary': 'Integration Project 5',
-            'timeZone': 'Europe/Brussels'
+            'timeZone': 'Europe/Brussels',
+            'defaultReminders': [],
+            'accessRole': 'owner',
+            'role': 'owner'
         }
 
-    # Share the calendar publicly
-    rule = {
-        'scope': {
-            'type': 'default',
-        },
-        'role': 'reader'  # Allow anyone to view the calendar
-    }
-    service.acl().insert(calendarId=calendar_id, body=rule).execute()
-    print('Calendar shared publicly')
+        created_calendar = service.calendars().insert(body=calendar).execute()
+        calendar_id = created_calendar['id']
+        print('Calendar created:', calendar_id)
 
-    # Add service account as an owner of the calendar
-    rule = {
-        'scope': {
-            'type': 'user',
-            'value': SERVICE_ACCOUNT_EMAIL,
-        },
-        'role': 'owner'  # Service account has ownership access
-    }
+        # Share the calendar publicly
+        rule = {
+            'scope': {
+                'type': 'default',
+            },
+            'role': 'reader'  # Allow anyone to view the calendar
+        }
+        service.acl().insert(calendarId=calendar_id, body=rule).execute()
+        print('Calendar shared publicly')
 
-    service.acl().insert(calendarId=calendar_id, body=rule).execute()
-    print('Permissions granted for service account:', SERVICE_ACCOUNT_EMAIL)
+        # Add service account as an owner of the calendar
+        rule = {
+            'scope': {
+                'type': 'user',
+                'value': SERVICE_ACCOUNT_EMAIL,
+            },
+            'role': 'owner'  # Service account has ownership access
+        }
+        service.acl().insert(calendarId=calendar_id, body=rule).execute()
+        print('Permissions granted for service account:', SERVICE_ACCOUNT_EMAIL)
 
-
-    created_calendar = service.calendars().insert(body=calendar).execute()
-    print('Calendar created:', created_calendar['id'])
-    calendar_id = created_calendar['id']
-    # Save calendar ID to the database
-    try:
-        insert_query = "INSERT INTO User (UserId, CalendarId) VALUES (%s, %s)"
-        cursor.execute(insert_query, (user_id, calendar_id))
-        mysql_connection.commit()
-        print("Calendar ID saved to the database for user:", user_id)
-    except mysql.connector.Error as e:
-        print("Error inserting calendar ID into database:", e)
-        mysql_connection.rollback()
+        # Save calendar ID to the database
+        try:
+            insert_query = "INSERT INTO User (UserId, CalendarId) VALUES (%s, %s)"
+            cursor.execute(insert_query, (user_id, calendar_id))
+            mysql_connection.commit()
+            print("Calendar ID saved to the database for user:", user_id)
+        except mysql.connector.Error as e:
+            print("Error inserting calendar ID into database:", e)
+            mysql_connection.rollback()
 
     # Generate calendar link
-    calendar_link = f"https://calendar.google.com/calendar/embed?src={calendar_id}&ctz=Europe%2FBrussels"
-    
+    calendar_link = f"https://calendar.google.com/calendar/u/0?cid={calendar_id}"
 
     # Save calendar link to the user
     update_query = "UPDATE User SET CalendarLink = %s WHERE UserId = %s"
@@ -151,16 +152,15 @@ def add_event_from_database(event_id, calendar_service, calendar_id, mysql_conne
             event_body = {
                 'summary': event_details[1],  # Assuming summary is at index 1 in the database
                 'start': {
-                    'dateTime': event_details[2].isoformat() + 'Z',  # Assuming start datetime is at index 2
+                    'dateTime': event_details[2].isoformat(),  # Assuming start datetime is at index 2
                 },
                 'end': {
-                    'dateTime': event_details[3].isoformat() + 'Z',  # Assuming end datetime is at index 3
+                    'dateTime': event_details[3].isoformat(),  # Assuming end datetime is at index 3
                 },
-                'timeZone': 'Europe/Brussels',
                 'location': event_details[4],  # Assuming location is at index 4
                 'description': event_details[5]  # Assuming description is at index 5
             }
-            print(event_details[1])
+
             # Insert event into Google Calendar
             created_event = calendar_service.events().insert(calendarId=calendar_id, body=event_body).execute()
             print('Event added to Google Calendar:', created_event['id'])
