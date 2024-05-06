@@ -36,7 +36,7 @@ def connect_to_mysql():
         return None
 
 def create_calendar(user_id):
-    """Create a new calendar and add events to it."""
+    # Create a new calendar, add events to it, and save calendar link to the user.
     # Authenticate using service account credentials
     creds = service_account.Credentials.from_service_account_info(
         {
@@ -91,6 +91,15 @@ def create_calendar(user_id):
             print("Error inserting calendar ID into database:", e)
             mysql_connection.rollback()
 
+    # Generate calendar link
+    calendar_link = f"https://calendar.google.com/calendar/u/0?cid={calendar_id}"
+
+    # Save calendar link to the user
+    update_query = "UPDATE User SET CalendarLink = %s WHERE UserId = %s"
+    cursor.execute(update_query, (calendar_link, user_id))
+    mysql_connection.commit()
+    print("Calendar link saved to the database for user:", user_id)
+
     # Fetch event with ID 1 from the database and add it to the calendar
     add_event_from_database(1, service, calendar_id, mysql_connection)
 
@@ -104,7 +113,7 @@ def create_calendar(user_id):
     cursor.close()
     mysql_connection.close()
 
-    return calendar_id
+    return calendar_link
 
 def add_event_from_database(event_id, calendar_service, calendar_id, mysql_connection):
     try:
@@ -186,9 +195,8 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection):
         return events
     except Exception as e:
         print("An error occurred:", e)
-        return None
 
 if __name__ == '__main__':
     user_id_from_rabbitmq = 1  # Replace with actual user ID received from RabbitMQ
-    calendar_id = create_calendar(user_id_from_rabbitmq)
-    print('Calendar ID:', calendar_id)
+    calendar_link = create_calendar(user_id_from_rabbitmq)
+    print('Calendar Link:', calendar_link)
