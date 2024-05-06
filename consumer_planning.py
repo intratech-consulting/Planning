@@ -1,3 +1,7 @@
+# DEZE CONSUMER NIET MEER GEBRUIKEN!!!
+
+
+
 import pika
 import pymysql
 from xml.etree import ElementTree as ET
