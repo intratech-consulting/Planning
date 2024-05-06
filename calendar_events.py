@@ -96,13 +96,30 @@ def create_calendar(user_id):
     end_date = datetime.datetime(2024, 5, 31)   # Example end date
 
     # Fetch events from the calendar within the time range
-    calendar_events = fetch_events(service, start_date, end_date, calendar_id)
+    calendar_events = fetch_events(service, start_date, end_date, calendar_id, mysql_connection)
 
-    if calendar_events is not None:
-        if calendar_events:
+    cursor.close()
+    mysql_connection.close()
+
+    return calendar_id
+
+def fetch_events(calendar_service, start_date, end_date, calendar_id, mysql_connection):
+    try:
+        # Fetch events from Google Calendar
+        events_result = calendar_service.events().list(
+            calendarId=calendar_id,
+            timeMin=start_date.isoformat() + 'Z',
+            timeMax=end_date.isoformat() + 'Z',
+            singleEvents=True,
+        ).execute()
+
+        events = events_result.get('items', [])
+
+        if events:
             try:
+                cursor = mysql_connection.cursor()
                 insert_query = "INSERT INTO Events (summary, start_datetime, end_datetime, location, description) VALUES (%s, %s, %s, %s, %s)"
-                for event in calendar_events:
+                for event in events:
                     summary = event['summary']
                     start = event['start'].get('dateTime', event['start'].get('date'))
                     end = event['end'].get('dateTime', event['end'].get('date'))
@@ -126,27 +143,10 @@ def create_calendar(user_id):
             except mysql.connector.Error as e:
                 print("Error inserting events into MySQL table:", e)
                 mysql_connection.rollback()
+            finally:
+                cursor.close()
         else:
             print("No events found in the calendar within the specified time range.")
-    else:
-        print("Failed to fetch events from the calendar.")
-
-    cursor.close()
-    mysql_connection.close()
-
-    return calendar_id
-
-def fetch_events(calendar_service, start_date, end_date, calendar_id):
-    try:
-        # Fetch events from Google Calendar
-        events_result = calendar_service.events().list(
-            calendarId=calendar_id,
-            timeMin=start_date.isoformat() + 'Z',
-            timeMax=end_date.isoformat() + 'Z',
-            singleEvents=True,
-        ).execute()
-
-        events = events_result.get('items', [])
 
         return events
     except Exception as e:
