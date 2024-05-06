@@ -96,7 +96,7 @@ def create_calendar(user_id):
     end_date = datetime.datetime(2024, 5, 31)   # Example end date
 
     # Fetch events from the calendar within the time range
-    calendar_events = fetch_events(service, start_date, end_date, calendar_id, mysql_connection)
+    fetch_events(service, start_date, end_date, mysql_connection)
 
     cursor.close()
     mysql_connection.close()
