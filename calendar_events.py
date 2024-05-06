@@ -137,7 +137,7 @@ def add_event_from_database(event_id, calendar_service, calendar_id, mysql_conne
                 'location': event_details[4],  # Assuming location is at index 4
                 'description': event_details[5]  # Assuming description is at index 5
             }
-
+            print(event_details[1])
             # Insert event into Google Calendar
             created_event = calendar_service.events().insert(calendarId=calendar_id, body=event_body).execute()
             print('Event added to Google Calendar:', created_event['id'])
