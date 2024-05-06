@@ -1,5 +1,5 @@
 import datetime
-import os.path
+import os
 from dotenv import load_dotenv
 import mysql.connector
 from googleapiclient.discovery import build
@@ -36,7 +36,7 @@ def connect_to_mysql():
         return None
 
 def create_calendar(user_id):
-    """Create a new calendar and add events to it."""
+    # Create a new calendar, add events to it, and save calendar link to the user.
     # Authenticate using service account credentials
     creds = service_account.Credentials.from_service_account_info(
         {
@@ -77,32 +77,117 @@ def create_calendar(user_id):
             'timeZone': 'Europe/Brussels'
         }
 
-        created_calendar = service.calendars().insert(body=calendar).execute()
-        print('Calendar created:', created_calendar['id'])
-        calendar_id = created_calendar['id']
+    # Share the calendar publicly
+    rule = {
+        'scope': {
+            'type': 'default',
+        },
+        'role': 'reader'  # Allow anyone to view the calendar
+    }
+    service.acl().insert(calendarId=calendar_id, body=rule).execute()
+    print('Calendar shared publicly')
 
-        # Save calendar ID to the database
-        try:
-            insert_query = "INSERT INTO User (UserId, CalendarId) VALUES (%s, %s)"
-            cursor.execute(insert_query, (user_id, calendar_id))
-            mysql_connection.commit()
-            print("Calendar ID saved to the database for user:", user_id)
-        except mysql.connector.Error as e:
-            print("Error inserting calendar ID into database:", e)
-            mysql_connection.rollback()
+    # Add service account as an owner of the calendar
+    rule = {
+        'scope': {
+            'type': 'user',
+            'value': SERVICE_ACCOUNT_EMAIL,
+        },
+        'role': 'owner'  # Service account has ownership access
+    }
+
+    service.acl().insert(calendarId=calendar_id, body=rule).execute()
+    print('Permissions granted for service account:', SERVICE_ACCOUNT_EMAIL)
+
+
+    created_calendar = service.calendars().insert(body=calendar).execute()
+    print('Calendar created:', created_calendar['id'])
+    calendar_id = created_calendar['id']
+    # Save calendar ID to the database
+    try:
+        insert_query = "INSERT INTO User (UserId, CalendarId) VALUES (%s, %s)"
+        cursor.execute(insert_query, (user_id, calendar_id))
+        mysql_connection.commit()
+        print("Calendar ID saved to the database for user:", user_id)
+    except mysql.connector.Error as e:
+        print("Error inserting calendar ID into database:", e)
+        mysql_connection.rollback()
+
+    # Generate calendar link
+    calendar_link = f"https://calendar.google.com/calendar/embed?src={calendar_id}&ctz=Europe%2FBrussels"
+    
+
+    # Save calendar link to the user
+    update_query = "UPDATE User SET CalendarLink = %s WHERE UserId = %s"
+    cursor.execute(update_query, (calendar_link, user_id))
+    mysql_connection.commit()
+    print("Calendar link saved to the database for user:", user_id)
+
+    # Fetch event with ID 1 from the database and add it to the calendar
+    add_event_from_database(1, service, calendar_id, mysql_connection)
 
     # Define start and end dates (assuming they are defined elsewhere in your code)
     start_date = datetime.datetime(2024, 5, 1)  # Example start date
     end_date = datetime.datetime(2024, 5, 31)   # Example end date
 
     # Fetch events from the calendar within the time range
-    calendar_events = fetch_events(service, start_date, end_date, calendar_id)
+    fetch_events(service, start_date, end_date, mysql_connection)
 
-    if calendar_events is not None:
-        if calendar_events:
+    cursor.close()
+    mysql_connection.close()
+
+    return calendar_link
+
+def add_event_from_database(event_id, calendar_service, calendar_id, mysql_connection):
+    try:
+        # Fetch event details from the database
+        cursor = mysql_connection.cursor()
+        select_query = "SELECT * FROM Events WHERE Id = %s"
+        cursor.execute(select_query, (event_id,))
+        event_details = cursor.fetchone()
+
+        if event_details:
+            # Construct event body
+            event_body = {
+                'summary': event_details[1],  # Assuming summary is at index 1 in the database
+                'start': {
+                    'dateTime': event_details[2].isoformat() + 'Z',  # Assuming start datetime is at index 2
+                },
+                'end': {
+                    'dateTime': event_details[3].isoformat() + 'Z',  # Assuming end datetime is at index 3
+                },
+                'timeZone': 'Europe/Brussels',
+                'location': event_details[4],  # Assuming location is at index 4
+                'description': event_details[5]  # Assuming description is at index 5
+            }
+            print(event_details[1])
+            # Insert event into Google Calendar
+            created_event = calendar_service.events().insert(calendarId=calendar_id, body=event_body).execute()
+            print('Event added to Google Calendar:', created_event['id'])
+        else:
+            print("Event with id", event_id, "not found in the database.")
+
+        cursor.close()
+    except Exception as e:
+        print("An error occurred while adding event to Google Calendar:", e)
+
+def fetch_events(calendar_service, start_date, end_date, mysql_connection):
+    try:
+        # Fetch events from Google Calendar
+        events_result = calendar_service.events().list(
+            calendarId= "9ecbb3026111b91a9ce21bfed88d67b95783a5a418c6d82aaa220776eb70f5d3@group.calendar.google.com",
+            timeMin=start_date.isoformat() + 'Z',
+            timeMax=end_date.isoformat() + 'Z',
+            singleEvents=True,
+        ).execute()
+
+        events = events_result.get('items', [])
+
+        if events:
             try:
+                cursor = mysql_connection.cursor()
                 insert_query = "INSERT INTO Events (summary, start_datetime, end_datetime, location, description) VALUES (%s, %s, %s, %s, %s)"
-                for event in calendar_events:
+                for event in events:
                     summary = event['summary']
                     start = event['start'].get('dateTime', event['start'].get('date'))
                     end = event['end'].get('dateTime', event['end'].get('date'))
@@ -126,34 +211,16 @@ def create_calendar(user_id):
             except mysql.connector.Error as e:
                 print("Error inserting events into MySQL table:", e)
                 mysql_connection.rollback()
+            finally:
+                cursor.close()
         else:
             print("No events found in the calendar within the specified time range.")
-    else:
-        print("Failed to fetch events from the calendar.")
-
-    cursor.close()
-    mysql_connection.close()
-
-    return calendar_id
-
-def fetch_events(calendar_service, start_date, end_date, calendar_id):
-    try:
-        # Fetch events from Google Calendar
-        events_result = calendar_service.events().list(
-            calendarId=calendar_id,
-            timeMin=start_date.isoformat() + 'Z',
-            timeMax=end_date.isoformat() + 'Z',
-            singleEvents=True,
-        ).execute()
-
-        events = events_result.get('items', [])
 
         return events
     except Exception as e:
         print("An error occurred:", e)
-        return None
 
 if __name__ == '__main__':
     user_id_from_rabbitmq = 1  # Replace with actual user ID received from RabbitMQ
-    calendar_id = create_calendar(user_id_from_rabbitmq)
-    print('Calendar ID:', calendar_id)
+    calendar_link = create_calendar(user_id_from_rabbitmq)
+    print('Calendar Link:', calendar_link)
