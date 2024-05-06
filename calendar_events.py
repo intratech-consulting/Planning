@@ -92,7 +92,7 @@ def create_calendar(user_id):
             mysql_connection.rollback()
 
     # Generate calendar link
-    calendar_link = f"https://calendar.google.com/calendar/u/0?cid={calendar_id}"
+    calendar_link = f"<a href='https://calendar.google.com/calendar/u/0?cid={calendar_id}'>Click here to view calendar</a>"
 
     # Save calendar link to the user
     update_query = "UPDATE User SET CalendarLink = %s WHERE UserId = %s"
@@ -119,7 +119,7 @@ def add_event_from_database(event_id, calendar_service, calendar_id, mysql_conne
     try:
         # Fetch event details from the database
         cursor = mysql_connection.cursor()
-        select_query = "SELECT * FROM Events WHERE EventId = %s"
+        select_query = "SELECT * FROM Events WHERE Id = %s"
         cursor.execute(select_query, (event_id,))
         event_details = cursor.fetchone()
 
