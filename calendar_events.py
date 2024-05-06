@@ -1,5 +1,5 @@
 import datetime
-import os.path
+import os
 from dotenv import load_dotenv
 import mysql.connector
 from googleapiclient.discovery import build
@@ -91,6 +91,9 @@ def create_calendar(user_id):
             print("Error inserting calendar ID into database:", e)
             mysql_connection.rollback()
 
+    # Fetch event with ID 1 from the database and add it to the calendar
+    add_event_from_database(1, service, calendar_id, mysql_connection)
+
     # Define start and end dates (assuming they are defined elsewhere in your code)
     start_date = datetime.datetime(2024, 5, 1)  # Example start date
     end_date = datetime.datetime(2024, 5, 31)   # Example end date
@@ -102,6 +105,38 @@ def create_calendar(user_id):
     mysql_connection.close()
 
     return calendar_id
+
+def add_event_from_database(event_id, calendar_service, calendar_id, mysql_connection):
+    try:
+        # Fetch event details from the database
+        cursor = mysql_connection.cursor()
+        select_query = "SELECT * FROM Events WHERE EventId = %s"
+        cursor.execute(select_query, (event_id,))
+        event_details = cursor.fetchone()
+
+        if event_details:
+            # Construct event body
+            event_body = {
+                'summary': event_details[1],  # Assuming summary is at index 1 in the database
+                'start': {
+                    'dateTime': event_details[2].isoformat(),  # Assuming start datetime is at index 2
+                },
+                'end': {
+                    'dateTime': event_details[3].isoformat(),  # Assuming end datetime is at index 3
+                },
+                'location': event_details[4],  # Assuming location is at index 4
+                'description': event_details[5]  # Assuming description is at index 5
+            }
+
+            # Insert event into Google Calendar
+            created_event = calendar_service.events().insert(calendarId=calendar_id, body=event_body).execute()
+            print('Event added to Google Calendar:', created_event['id'])
+        else:
+            print("Event with id", event_id, "not found in the database.")
+
+        cursor.close()
+    except Exception as e:
+        print("An error occurred while adding event to Google Calendar:", e)
 
 def fetch_events(calendar_service, start_date, end_date, mysql_connection):
     try:
