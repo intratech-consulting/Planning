@@ -1,0 +1,9 @@
+services:
+  container:
+    image: planning/planning:latest
+    container_name: planning-container
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "7272:7272"
