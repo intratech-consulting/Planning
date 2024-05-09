@@ -16,7 +16,8 @@ RUN pip install --no-cache-dir \
     python-dotenv \
     python-dateutil \
     pytz \
-    supervisor
+    supervisor \
+    sqlalchemy
 
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
