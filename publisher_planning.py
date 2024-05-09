@@ -35,9 +35,15 @@ table = Table(table_name, metadata, autoload_with=engine)
 # Specify the columns to extract
 columns_to_extract = ['UserId', 'CalendarLink']
 
+# Build a list of column objects for the select statement
+columns = [table.c[column] for column in columns_to_extract]
+
+# Construct the select statement with the list of columns
+select_stmt = select(columns)
+
 # Construct the XML user-object with specific fields populated
 with engine.connect() as conn:
-    for row in conn.execute(select([table.c[column] for column in columns_to_extract])):
+    for row in conn.execute(select_stmt):
         user_xml = ET.Element('user')
 
         # Populate specific fields from the database
