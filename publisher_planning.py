@@ -59,8 +59,8 @@ with engine.connect() as conn:
 
         # Publish the XML user-object as a message
         channel.basic_publish(
-            exchange='',  # Use default exchange
-            routing_key='user',
+            exchange='amq.topic',  # Use default exchange
+            routing_key='user.frontend',
             body=user_xml_string  # Set the message body as the serialized XML string
         )
         print(f'Message sent for user_id: {row["UserId"]}')
