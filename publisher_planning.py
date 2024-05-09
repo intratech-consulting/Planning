@@ -72,7 +72,7 @@ def publish_user_xml(user_id):
         routing_key = 'user.frontend'
 
         # Declare the exchange
-        channel.exchange_declare(exchange=exchange_name, exchange_type='topic')
+        channel.exchange_declare(exchange=exchange_name, exchange_type='topic', durable=True)
 
         # Publish the message
         channel.basic_publish(exchange=exchange_name, routing_key=routing_key, body=xml_str)
