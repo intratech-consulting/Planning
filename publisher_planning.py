@@ -1,81 +1,90 @@
-import pika
-from sqlalchemy import create_engine, MetaData, Table, select, Column
 import xml.etree.ElementTree as ET
+import mysql.connector
+import pika
 from dotenv import load_dotenv
 import os
 
 # Load environment variables from .env file
 load_dotenv()
 
-# RabbitMQ connection parameters
-credentials = pika.PlainCredentials(os.getenv('RABBITMQ_USER'), os.getenv('RABBITMQ_PASSWORD'))
-connection = pika.BlockingConnection(pika.ConnectionParameters(host=os.getenv('RABBITMQ_HOST'), credentials=credentials))
-channel = connection.channel()
+# Function to fetch user data from MySQL database based on user_id
+def fetch_user_data(user_id):
+    # Establish database connection
+    conn = mysql.connector.connect(
+        host=os.getenv('DB_HOST'),
+        database=os.getenv('DB_NAME'),
+        user=os.getenv('DB_USER'),
+        password=os.getenv('DB_PASSWORD')
+    )
 
-# Declare the 'user' queue
-channel.queue_declare(queue='user', durable=True)
+    cursor = conn.cursor()
 
-# Database connection parameters
-DB_HOST = os.getenv('DB_HOST')
-DB_USER = os.getenv('DB_USER')
-DB_PASSWORD = os.getenv('DB_PASSWORD')
-DB_DATABASE = os.getenv('DB_DATABASE')
+    # Fetch user data based on user_id
+    query = "SELECT UserId, CalendarLink FROM User WHERE UserId = %s"
+    cursor.execute(query, (user_id,))
+    user_data = cursor.fetchone()
 
-# MySQL database connection string
-DB_CONNECTION_STRING = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_DATABASE}'
+    # Close cursor and connection
+    cursor.close()
+    conn.close()
 
-# Establish a database connection
-engine = create_engine(DB_CONNECTION_STRING)
+    return user_data
 
-# Reflect the table from the database
-metadata = MetaData()
-table_name = 'User'
-table = Table(table_name, metadata, autoload_with=engine)
+# Function to publish XML object to RabbitMQ
+def publish_user_xml(user_id):
+    # Fetch user data from MySQL database
+    user_data = fetch_user_data(user_id)
 
-# Specify the columns to extract
-columns_to_extract = ['UserId', 'CalendarLink']
+    if user_data:
+        user_id, calendar_link = user_data
 
-# Build a list of column objects for the select statement
-columns = [table.c[column] for column in columns_to_extract]
+        # Construct XML document based on schema
+        user_elem = ET.Element('user')
 
-# Construct the select statement with the list of columns
-select_stmt = select(*columns)
-
-# Construct the XML user-object with specific fields populated
-with engine.connect() as conn:
-    for row in conn.execute(select_stmt):
-        user_xml = ET.Element('user')
-
-        # Populate specific fields from the database
-        for column in columns_to_extract:
-            # Dynamically retrieve column value from the row tuple
-            value = str(getattr(row, column)) if getattr(row, column) is not None else ''
-            ET.SubElement(user_xml, column.lower()).text = value
-        
-        # Hardcode empty elements
-        empty_elements = [
-            'routing_key', 'first_name', 'last_name', 'email', 'telephone',
-            'birthday', 'company_email', 'company_id', 'source', 'user_role',
-            'invoice', 'calendar_id'
+         # Define all elements from the schema with empty values
+        elements = [
+            'routing_key', 'user_id', 'first_name', 'last_name', 'email',
+            'telephone', 'birthday', 'country', 'state', 'city', 'zip',
+            'street', 'house_number', 'company_email', 'company_id', 'source',
+            'user_role', 'invoice', 'calendar_link'
         ]
-        for element in empty_elements:
-            ET.SubElement(user_xml, element).text = ''
 
-        # Serialize the XML object to a string
-        user_xml_string = ET.tostring(user_xml, encoding='unicode')
+        for elem_name in elements:
+            elem = ET.SubElement(user_elem, elem_name)
 
-        # Publish the XML user-object as a message
-        channel.basic_publish(
-            exchange='amq.topic',  # Use default exchange
-            routing_key='user.frontend',
-            body=user_xml_string  # Set the message body as the serialized XML string
-        )
-        print(f'Message sent for user_id: {row["UserId"]}')
+        # Set values for specific elements (user_id and calendar_link)
+        user_id_elem = user_elem.find('user_id')
+        user_id_elem.text = user_id
 
-# Close database connection
-engine.dispose()
-print('All messages sent.')
+        calendar_link_elem = user_elem.find('calendar_link')
+        calendar_link_elem.text = calendar_link
 
-# Close RabbitMQ connection
-channel.close()
-connection.close()
+        # Create XML string
+        xml_str = ET.tostring(user_elem, encoding='utf-8', method='xml')
+        xml_str = xml_str.decode('utf-8')  # Convert bytes to string
+
+        # Publish the XML object to RabbitMQ
+        credentials = pika.PlainCredentials(os.getenv('RABBITMQ_USER'), os.getenv('RABBITMQ_PASSWORD'))
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=os.getenv('RABBITMQ_HOST'), credentials=credentials))
+        channel = connection.channel()
+
+        exchange_name = 'amq.topic'
+        routing_key = 'user.frontend'
+
+        # Declare the exchange
+        channel.exchange_declare(exchange=exchange_name, exchange_type='topic')
+
+        # Publish the message
+        channel.basic_publish(exchange=exchange_name, routing_key=routing_key, body=xml_str)
+
+        # Close the connection
+        connection.close()
+        
+        print(f"XML message published to RabbitMQ for user_id: {user_id}")
+    else:
+        print(f"User with user_id '{user_id}' not found in the database.")
+
+# Example usage
+if __name__ == '__main__':
+    user_id_to_publish = '123'  # Provide the user_id for which you want to publish the XML
+    publish_user_xml(user_id_to_publish)
