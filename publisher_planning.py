@@ -48,7 +48,8 @@ with engine.connect() as conn:
 
         # Populate specific fields from the database
         for column in columns_to_extract:
-            value = str(row[column]) if row[column] is not None else ''
+            # Dynamically retrieve column value from the row tuple
+            value = str(getattr(row, column)) if getattr(row, column) is not None else ''
             ET.SubElement(user_xml, column.lower()).text = value
         
         # Hardcode empty elements
