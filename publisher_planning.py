@@ -30,7 +30,8 @@ def fetch_user_data(user_id):
 
     return user_data
 
-# Function to publish XML object to RabbitMQ
+
+# Function to publish XML user-object to RabbitMQ
 def publish_user_xml(user_id):
     # Fetch user data from MySQL database
     user_data = fetch_user_data(user_id)
@@ -44,20 +45,22 @@ def publish_user_xml(user_id):
          # Define all elements from the schema with empty values
         elements = [
             'routing_key', 'user_id', 'first_name', 'last_name', 'email',
-            'telephone', 'birthday', 'country', 'state', 'city', 'zip',
-            'street', 'house_number', 'company_email', 'company_id', 'source',
+            'telephone', 'birthday', 'company_email', 'company_id', 'source',
             'user_role', 'invoice', 'calendar_link'
         ]
 
         for elem_name in elements:
-            elem = ET.SubElement(user_elem, elem_name)
+            ET.SubElement(user_elem, elem_name)
 
-        # Set values for specific elements (user_id and calendar_link)
-        user_id_elem = user_elem.find('user_id')
-        user_id_elem.text = str(user_id)
+        # Add address element
+        address_elem = ET.SubElement(user_elem, 'address')
+        address_sub_elements = ['country', 'state', 'city', 'zip', 'street', 'house_number']
+        for sub_elem_name in address_sub_elements:
+            ET.SubElement(address_elem, sub_elem_name)
 
-        calendar_link_elem = user_elem.find('calendar_link')
-        calendar_link_elem.text = calendar_link
+        # Set values for specific elements
+        user_elem.find('user_id').text = str(user_id)
+        user_elem.find('calendar_link').text = calendar_link or ''  # Use calendar_link or empty string
 
         # Create XML string
         xml_str = ET.tostring(user_elem, encoding='utf-8', method='xml')
@@ -83,6 +86,9 @@ def publish_user_xml(user_id):
         print(f"XML message published to RabbitMQ for user_id: {user_id}")
     else:
         print(f"User with user_id '{user_id}' not found in the database.")
+
+
+
 
 # Example usage
 if __name__ == '__main__':
