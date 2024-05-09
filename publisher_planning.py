@@ -86,5 +86,5 @@ def publish_user_xml(user_id):
 
 # Example usage
 if __name__ == '__main__':
-    user_id_to_publish = '123'  # Provide the user_id for which you want to publish the XML
+    user_id_to_publish = '1'  # Provide the user_id for which you want to publish the XML
     publish_user_xml(user_id_to_publish)
