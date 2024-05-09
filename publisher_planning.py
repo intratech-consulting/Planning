@@ -118,7 +118,52 @@ def publish_user_xml(user_id):
     else:
         print(f"User with user_id '{user_id}' not found in the database.")
 
+# Function to publish event XML object to RabbitMQ
+def publish_event_xml(event_id):
+    # Fetch event data from MySQL database
+    event_data = fetch_event_data(event_id)
 
+    if event_data:
+        (event_id, event_date, start_time, end_time, location, speaker_user_id, speaker_company_id,
+         max_registrations, available_seats, description) = event_data
+
+        # Construct XML document for event
+        event_elem = ET.Element('event')
+
+        # Define elements with empty values
+        elements = [
+            'routing_key', 'id', 'date', 'start_time', 'end_time', 'location', 'description',
+            'max_registrations', 'available_seats'
+        ]
+
+        for elem_name in elements:
+            ET.SubElement(event_elem, elem_name)
+
+        # Add speaker element
+        speaker_elem = ET.SubElement(event_elem, 'speaker')
+        ET.SubElement(speaker_elem, 'user_id').text = str(speaker_user_id)
+        ET.SubElement(speaker_elem, 'company_id').text = str(speaker_company_id)
+
+        # Set values for specific elements
+        event_elem.find('routing_key').text = 'frontend.crm'
+        event_elem.find('id').text = str(event_id)
+        event_elem.find('date').text = str(event_date)
+        event_elem.find('start_time').text = str(start_time)
+        event_elem.find('end_time').text = str(end_time)
+        event_elem.find('location').text = str(location)
+        event_elem.find('max_registrations').text = str(max_registrations)
+        event_elem.find('available_seats').text = str(available_seats)
+        event_elem.find('description').text = str(description)
+
+        # Create XML string
+        xml_str = ET.tostring(event_elem, encoding='utf-8', method='xml')
+        xml_str = xml_str.decode('utf-8')  # Convert bytes to string
+
+        # Publish the event XML object to RabbitMQ
+        publish_xml_message('amq.topic', 'event.frontend', xml_str)
+
+    else:
+        print(f"Event with event_id '{event_id}' not found in the database.")
 
 
 # Example usage
