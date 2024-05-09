@@ -48,7 +48,7 @@ def fetch_event_data(event_id):
                MaxRegistrations, AvailableSeats, Description  
         FROM Events
         WHERE EventId = %s
-    """ #TODO: database columns need to be changed
+    """                                                         #TODO: database columns need to be changed
     cursor.execute(query, (int(event_id),))
     event_data = cursor.fetchone()
 
@@ -57,6 +57,24 @@ def fetch_event_data(event_id):
     conn.close()
 
     return event_data
+
+# Function to publish XML object to RabbitMQ
+def publish_xml_message(exchange_name, routing_key, xml_str):
+    # Publish the XML object to RabbitMQ
+    credentials = pika.PlainCredentials(os.getenv('RABBITMQ_USER'), os.getenv('RABBITMQ_PASSWORD'))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=os.getenv('RABBITMQ_HOST'), credentials=credentials))
+    channel = connection.channel()
+
+    # Declare the exchange
+    channel.exchange_declare(exchange=exchange_name, exchange_type='topic', durable=True)
+
+    # Publish the message
+    channel.basic_publish(exchange=exchange_name, routing_key=routing_key, body=xml_str)
+
+    # Close the connection
+    connection.close()
+        
+    print(f"XML message published to RabbitMQ with routing key '{routing_key}'")
 
 
 # Function to publish XML user-object to RabbitMQ
@@ -94,22 +112,7 @@ def publish_user_xml(user_id):
         xml_str = ET.tostring(user_elem, encoding='utf-8', method='xml')
         xml_str = xml_str.decode('utf-8')  # Convert bytes to string
 
-        # Publish the XML object to RabbitMQ
-        credentials = pika.PlainCredentials(os.getenv('RABBITMQ_USER'), os.getenv('RABBITMQ_PASSWORD'))
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host=os.getenv('RABBITMQ_HOST'), credentials=credentials))
-        channel = connection.channel()
-
-        exchange_name = 'amq.topic'
-        routing_key = 'user.planning'
-
-        # Declare the exchange
-        channel.exchange_declare(exchange=exchange_name, exchange_type='topic', durable=True)
-
-        # Publish the message
-        channel.basic_publish(exchange=exchange_name, routing_key=routing_key, body=xml_str)
-
-        # Close the connection
-        connection.close()
+        publish_xml_message('amq.topic', 'user.frontend', xml_str)
         
         print(f"XML message published to RabbitMQ for user_id: {user_id}")
     else:
