@@ -69,7 +69,7 @@ def publish_user_xml(user_id):
         channel = connection.channel()
 
         exchange_name = 'amq.topic'
-        routing_key = 'user.frontend'
+        routing_key = 'user.planning'
 
         # Declare the exchange
         channel.exchange_declare(exchange=exchange_name, exchange_type='topic', durable=True)
