@@ -1,5 +1,5 @@
 import pika
-from sqlalchemy import create_engine, MetaData, Table, select
+from sqlalchemy import create_engine, MetaData, Table, select, Column
 import xml.etree.ElementTree as ET
 from dotenv import load_dotenv
 import os
@@ -39,7 +39,7 @@ columns_to_extract = ['UserId', 'CalendarLink']
 columns = [table.c[column] for column in columns_to_extract]
 
 # Construct the select statement with the list of columns
-select_stmt = select(columns)
+select_stmt = select(*columns)
 
 # Construct the XML user-object with specific fields populated
 with engine.connect() as conn:
