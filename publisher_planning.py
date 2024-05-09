@@ -112,7 +112,7 @@ def publish_user_xml(user_id):
         xml_str = ET.tostring(user_elem, encoding='utf-8', method='xml')
         xml_str = xml_str.decode('utf-8')  # Convert bytes to string
 
-        publish_xml_message('amq.topic', 'user.frontend', xml_str)
+        publish_xml_message('amq.topic', 'user.planning', xml_str)
         
         print(f"XML message published to RabbitMQ for user_id: {user_id}")
     else:
@@ -160,7 +160,7 @@ def publish_event_xml(event_id):
         xml_str = xml_str.decode('utf-8')  # Convert bytes to string
 
         # Publish the event XML object to RabbitMQ
-        publish_xml_message('amq.topic', 'event.frontend', xml_str)
+        publish_xml_message('amq.topic', 'event.planning', xml_str)
 
     else:
         print(f"Event with event_id '{event_id}' not found in the database.")
