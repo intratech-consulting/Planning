@@ -12,7 +12,7 @@ def fetch_user_data(user_id):
     # Establish database connection
     conn = mysql.connector.connect(
         host=os.getenv('DB_HOST'),
-        database=os.getenv('DB_NAME'),
+        database=os.getenv('DB_DATABASE'),
         user=os.getenv('DB_USER'),
         password=os.getenv('DB_PASSWORD')
     )
