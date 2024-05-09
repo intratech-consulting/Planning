@@ -17,7 +17,8 @@ RUN pip install --no-cache-dir \
     python-dateutil \
     pytz \
     supervisor \
-    sqlalchemy
+    sqlalchemy \
+    pymysql
 
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
