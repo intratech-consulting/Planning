@@ -21,7 +21,7 @@ def fetch_user_data(user_id):
 
     # Fetch user data based on user_id
     query = "SELECT UserId, CalendarLink FROM User WHERE UserId = %s"
-    cursor.execute(query, (user_id,))
+    cursor.execute(query, (int(user_id),))
     user_data = cursor.fetchone()
 
     # Close cursor and connection
@@ -54,7 +54,7 @@ def publish_user_xml(user_id):
 
         # Set values for specific elements (user_id and calendar_link)
         user_id_elem = user_elem.find('user_id')
-        user_id_elem.text = user_id
+        user_id_elem.text = str(user_id)
 
         calendar_link_elem = user_elem.find('calendar_link')
         calendar_link_elem.text = calendar_link
