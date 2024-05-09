@@ -30,6 +30,34 @@ def fetch_user_data(user_id):
 
     return user_data
 
+# Function to fetch event data from MySQL database based on event_id
+def fetch_event_data(event_id):
+    # Establish database connection
+    conn = mysql.connector.connect(
+        host=os.getenv('DB_HOST'),
+        database=os.getenv('DB_DATABASE'),
+        user=os.getenv('DB_USER'),
+        password=os.getenv('DB_PASSWORD')
+    )
+
+    cursor = conn.cursor()
+
+    # Fetch event data based on event_id
+    query = """
+        SELECT EventId, EventDate, StartTime, EndTime, Location, SpeakerUserId, SpeakerCompanyId,
+               MaxRegistrations, AvailableSeats, Description  
+        FROM Events
+        WHERE EventId = %s
+    """ #TODO: database columns need to be changed
+    cursor.execute(query, (int(event_id),))
+    event_data = cursor.fetchone()
+
+    # Close cursor and connection
+    cursor.close()
+    conn.close()
+
+    return event_data
+
 
 # Function to publish XML user-object to RabbitMQ
 def publish_user_xml(user_id):
