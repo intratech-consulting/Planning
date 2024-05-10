@@ -1,5 +1,6 @@
 import datetime
 import os
+import publisher_planning
 from dotenv import load_dotenv
 import mysql.connector
 from googleapiclient.discovery import build
@@ -73,11 +74,11 @@ def create_calendar(user_id):
     else:
         # Create a new calendar
         calendar_id = create_new_calendar(service, mysql_connection, user_id)
+        return calendar_id
 
     cursor.close()
     mysql_connection.close()
-
-    return calendar_id
+    
 
 def create_new_calendar(service, mysql_connection, user_id):
     # Create a new calendar
@@ -92,6 +93,8 @@ def create_new_calendar(service, mysql_connection, user_id):
     created_calendar = service.calendars().insert(body=calendar).execute()
     print('Calendar created:', created_calendar['id'])
     calendar_id = created_calendar['id']
+    calendar_link = f"https://calendar.google.com/calendar/embed?src={calendar_id}"
+    print('Calendar link:', calendar_link)
 
     # Share the calendar publicly
     rule = {
@@ -114,23 +117,59 @@ def create_new_calendar(service, mysql_connection, user_id):
     service.acl().insert(calendarId=calendar_id, body=rule).execute()
     print('Permissions granted for service account:', SERVICE_ACCOUNT_EMAIL)
 
-    # Save calendar ID to the database
+    # Save calendar ID and link to the database
     try:
         cursor = mysql_connection.cursor()
-        insert_query = "UPDATE User SET CalendarId = %s WHERE UserId = %s"
-        cursor.execute(insert_query, (calendar_id, user_id))
+        update_query = "UPDATE User SET CalendarId = %s, CalendarLink = %s WHERE UserId = %s"
+        cursor.execute(update_query, (calendar_id, calendar_link, user_id))
         mysql_connection.commit()
-        print("Calendar ID saved to the database for user:", user_id)
+        print("Calendar ID and link saved to the database for user:", user_id)
+        publisher_planning.publish_user_xml(user_id)
         cursor.close()
     except mysql.connector.Error as e:
-        print("Error inserting calendar ID into database:", e)
+        print("Error updating database:", e)
         mysql_connection.rollback()
 
     return calendar_id
 
-def add_event_to_calendar(event_id, service, calendar_id, mysql_connection):
-    # Fetch event details from the database
+def add_event_to_calendar(user_id, event_id):
+    creds = service_account.Credentials.from_service_account_info(
+        {
+            "type": "service_account",
+            "project_id": os.getenv("PROJECT_ID"),
+            "private_key_id": os.getenv("PRIVATE_KEY_ID"),
+            "private_key": os.getenv("PRIVATE_KEY").replace("\\n", "\n"),
+            "client_email": os.getenv("CLIENT_EMAIL"),
+            "client_id": os.getenv("CLIENT_ID"),
+            "auth_uri": os.getenv("AUTH_URI"),
+            "token_uri": os.getenv("TOKEN_URI"),
+            "auth_provider_x509_cert_url": os.getenv("AUTH_PROVIDER_X509_CERT_URL"),
+            "client_x509_cert_url": os.getenv("CLIENT_X509_CERT_URL"),
+            "universe_domain": os.getenv("UNIVERSE_DOMAIN")
+        },
+        scopes=SCOPES
+    )
+    service = build('calendar', 'v3', credentials=creds)
+
+    # MySQL Connection
+    mysql_connection = connect_to_mysql()
+    if mysql_connection is None:
+        return None
+
+    # Fetch calendar_id associated with user_id
     cursor = mysql_connection.cursor()
+    select_query = "SELECT CalendarId FROM User WHERE UserId = %s"
+    cursor.execute(select_query, (user_id,))
+    result = cursor.fetchone()
+    if result and result[0]:
+        calendar_id = result[0]
+    else:
+        print("Calendar ID not found for user with ID:", user_id)
+        cursor.close()
+        mysql_connection.close()
+        return
+
+    # Fetch event details from the database
     select_query = "SELECT * FROM Events WHERE Id = %s"
     cursor.execute(select_query, (event_id,))
     event_details = cursor.fetchone()
@@ -153,32 +192,17 @@ def add_event_to_calendar(event_id, service, calendar_id, mysql_connection):
         # Insert event into Google Calendar
         created_event = service.events().insert(calendarId=calendar_id, body=event_body).execute()
         print('Event added to Google Calendar:', created_event['id'])
+        publisher_planning.publish_event_xml(event_id)
     else:
         print("Event with id", event_id, "not found in the database.")
 
     cursor.close()
+    mysql_connection.close()
+
 
 if __name__ == '__main__':
-    user_id_from_rabbitmq = 6  # Replace with actual user ID received from RabbitMQ
-    event_id = 1
-    creds = service_account.Credentials.from_service_account_info(
-        {
-            "type": "service_account",
-            "project_id": os.getenv("PROJECT_ID"),
-            "private_key_id": os.getenv("PRIVATE_KEY_ID"),
-            "private_key": os.getenv("PRIVATE_KEY").replace("\\n", "\n"),
-            "client_email": os.getenv("CLIENT_EMAIL"),
-            "client_id": os.getenv("CLIENT_ID"),
-            "auth_uri": os.getenv("AUTH_URI"),
-            "token_uri": os.getenv("TOKEN_URI"),
-            "auth_provider_x509_cert_url": os.getenv("AUTH_PROVIDER_X509_CERT_URL"),
-            "client_x509_cert_url": os.getenv("CLIENT_X509_CERT_URL"),
-            "universe_domain": os.getenv("UNIVERSE_DOMAIN")
-        },
-        scopes=SCOPES
-    )
-    service = build('calendar', 'v3', credentials=creds)
-    mysql_connection = connect_to_mysql()
-    calendar_id = create_calendar(user_id_from_rabbitmq)
-    ## add_event_to_calendar(event_id, service, calendar_id, mysql_connection)
-    mysql_connection.close()
+    user_id_from_rabbitmq = 25 # Hardcoded, make it a comment when we use function calls
+    event_id = 7  # Hardcoded, make it a comment when we use function calls
+    create_calendar(user_id_from_rabbitmq)
+    add_event_to_calendar(user_id_from_rabbitmq, event_id)
+    

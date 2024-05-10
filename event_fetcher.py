@@ -54,14 +54,18 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
             if events:
                 try:
                     cursor = mysql_connection.cursor()
-                    insert_query = "INSERT INTO Events (summary, start_datetime, end_datetime, location, description) VALUES (%s, %s, %s, %s, %s)"
+                    insert_query = "INSERT INTO Events (summary, start_datetime, end_datetime, location, description, max_registrations, available_seats) VALUES (%s, %s, %s, %s, %s, %s, %s)"
                     for event in events:
                         summary = event['summary']
                         start = event['start'].get('dateTime', event['start'].get('date'))
                         end = event['end'].get('dateTime', event['end'].get('date'))
-                        location = event.get('location', 'N/A')
+                        location_with_max = event.get('location', 'N/A')
+                        # Split location to extract location and max_registrations
+                        location_parts = location_with_max.split('-')
+                        location = location_parts[0].strip() if len(location_parts) >= 1 else 'N/A'  # Extract location
+                        max_registrations = int(location_parts[1]) if len(location_parts) >= 2 else 0  # Extract max_registrations
                         description = event.get('description', 'N/A')
-
+                        available_seats = 50
                         # Check if event already exists in the database
                         event_exists_query = "SELECT COUNT(*) FROM Events WHERE summary = %s AND start_datetime = %s AND end_datetime = %s"
                         cursor.execute(event_exists_query, (summary, start, end))
@@ -69,7 +73,7 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
 
                         if event_count == 0:
                             # Insert event into MySQL table if it doesn't exist
-                            cursor.execute(insert_query, (summary, start, end, location, description))
+                            cursor.execute(insert_query, (summary, start, end, location, description, max_registrations, available_seats))
                             logging.info("Event inserted into MySQL table: %s", summary)
                         else:
                             logging.info("Event already exists in MySQL table. Skipping insertion: %s", summary)
@@ -91,8 +95,8 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
 
 if __name__ == "__main__":
     # Set start date to today and end date to 3 weeks after
-    start_date = datetime.datetime.now() + datetime.timedelta(weeks=3)
-    end_date = datetime.datetime.now()
+    start_date = datetime.datetime.now()
+    end_date = datetime.datetime.now() + datetime.timedelta(weeks=3)
 
    
     creds = service_account.Credentials.from_service_account_info(
