@@ -198,8 +198,8 @@ def add_event_to_calendar(user_id, event_id):
 
 
 if __name__ == '__main__':
-    user_id_from_rabbitmq = 26 # Replace with actual user ID received from RabbitMQ
-    event_id = 6  # Replace with actual event ID received from RabbitMQ
+    user_id_from_rabbitmq = 25 # Replace with actual user ID received from RabbitMQ
+    event_id = 7  # Replace with actual event ID received from RabbitMQ
     create_calendar(user_id_from_rabbitmq)
     add_event_to_calendar(user_id_from_rabbitmq, event_id)
     
