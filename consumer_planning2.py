@@ -3,6 +3,7 @@ import pika
 from lxml import etree
 from dotenv import load_dotenv
 import mysql.connector
+import calendar_events
 
 # Load environment variables from .env file
 load_dotenv()
@@ -185,25 +186,18 @@ def save_company_to_database(root_element):
     except Exception as e:
         print(f"Error saving company data to database: {str(e)}")
 
-def save_attendance_to_database(root_element):
+#Function to extract attendance data and funtioncall to system
+def send_attendance_to_system(root_element):
     try:
         user_id = root_element.find('user_id').text
         event_id = root_element.find('event_id').text
         
-        conn = get_database_connection()
-        cursor = conn.cursor()
-
-        sql = "INSERT INTO Attendance (UserId, EventId) VALUES (%s, %s, %s)"
-        values = (user_id, event_id)
-        cursor.execute(sql, values)
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-        print("Attendance data saved to the database successfully.")
+        # Call function to add event to calendar using extracted user_id and event_id
+        calendar_events.add_event_to_calendar(user_id, event_id)
+        
+        print("Event added to calendar successfully.")
     except Exception as e:
-        print(f"Error saving attendance data to database: {str(e)}")
-
+        print(f"Error adding event to calendar: {str(e)}")
 
 # Callback function for consuming messages
 def callback(ch, method, properties, body):
@@ -221,7 +215,7 @@ def callback(ch, method, properties, body):
             elif xml_type == 'company':
                 save_company_to_database(root_element)
             elif xml_type == 'attendance':
-                save_attendance_to_database(root_element)
+                send_attendance_to_system(root_element)
             else:
                 print(f"No handler defined for XML type: {xml_type}")
         else:
