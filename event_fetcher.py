@@ -90,8 +90,8 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
         logging.error("An error occurred: %s", e)
 
 if __name__ == "__main__":
-    # Set start date to today and end date to 3 weeks before
-    start_date = datetime.datetime.now() - datetime.timedelta(weeks=3)
+    # Set start date to today and end date to 3 weeks after
+    start_date = datetime.datetime.now() + datetime.timedelta(weeks=3)
     end_date = datetime.datetime.now()
 
    
