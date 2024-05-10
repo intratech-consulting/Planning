@@ -185,6 +185,26 @@ def save_company_to_database(root_element):
     except Exception as e:
         print(f"Error saving company data to database: {str(e)}")
 
+def save_attendance_to_database(root_element):
+    try:
+        user_id = root_element.find('user_id').text
+        event_id = root_element.find('event_id').text
+        
+        conn = get_database_connection()
+        cursor = conn.cursor()
+
+        sql = "INSERT INTO Attendance (UserId, EventId) VALUES (%s, %s, %s)"
+        values = (user_id, event_id)
+        cursor.execute(sql, values)
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+        print("Attendance data saved to the database successfully.")
+    except Exception as e:
+        print(f"Error saving attendance data to database: {str(e)}")
+
+
 # Callback function for consuming messages
 def callback(ch, method, properties, body):
     try:
@@ -200,6 +220,8 @@ def callback(ch, method, properties, body):
                 save_user_to_database(root_element)
             elif xml_type == 'company':
                 save_company_to_database(root_element)
+            elif xml_type == 'attendance':
+                save_attendance_to_database(root_element)
             else:
                 print(f"No handler defined for XML type: {xml_type}")
         else:
@@ -209,8 +231,8 @@ def callback(ch, method, properties, body):
         print(f"Error processing message: {str(e)}")
 
 # Connect to RabbitMQ server
-credentials = pika.PlainCredentials('user', 'password')
-connection = pika.BlockingConnection(pika.ConnectionParameters(host='10.2.160.51', credentials=credentials))
+credentials = pika.PlainCredentials('RABBITMQ_USER', 'RABBITMQ_PASSWORD')
+connection = pika.BlockingConnection(pika.ConnectionParameters(host='RABBITMQ_HOST', credentials=credentials))
 channel = connection.channel()
 
 # Declare the queue
