@@ -91,8 +91,9 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
 
 if __name__ == "__main__":
     # Set start date to today and end date to 3 weeks before
-    start_date = datetime.datetime.now()
-    end_date = start_date - datetime.timedelta(weeks=3)
+    start_date = datetime.datetime.now() - datetime.timedelta(weeks=3)
+    end_date = datetime.datetime.now()
+
    
     creds = service_account.Credentials.from_service_account_info(
         {
