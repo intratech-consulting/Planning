@@ -44,11 +44,10 @@ def fetch_event_data(event_id):
 
     # Fetch event data based on event_id
     query = """
-        SELECT EventId, EventDate, StartTime, EndTime, Location, SpeakerUserId, SpeakerCompanyId,
-               MaxRegistrations, AvailableSeats, Description  
+        SELECT Id, Start_datetime, End_datetime, Location, Description, Max_Registrations, Available_Seats
         FROM Events
-        WHERE EventId = %s
-    """                                                         #TODO: database columns need to be changed
+        WHERE Id = %s
+    """
     cursor.execute(query, (int(event_id),))
     event_data = cursor.fetchone()
 
@@ -118,42 +117,46 @@ def publish_user_xml(user_id):
     else:
         print(f"User with user_id '{user_id}' not found in the database.")
 
-# Function to publish event XML object to RabbitMQ
+# Function to publish XML event object to RabbitMQ
 def publish_event_xml(event_id):
     # Fetch event data from MySQL database
     event_data = fetch_event_data(event_id)
 
     if event_data:
-        (event_id, event_date, start_time, end_time, location, speaker_user_id, speaker_company_id,
-         max_registrations, available_seats, description) = event_data
+        (id, start_datetime, end_datetime, location, description, max_registrations, available_seats) = event_data
+
+        # Extract date and time components
+        event_date = start_datetime.date()
+        start_time = start_datetime.time()
+        end_time = end_datetime.time()
 
         # Construct XML document for event
         event_elem = ET.Element('event')
 
-        # Define elements with empty values
+        # Define elements with extracted values
         elements = [
-            'routing_key', 'id', 'date', 'start_time', 'end_time', 'location', 'description',
-            'max_registrations', 'available_seats'
+            ('routing_key', 'event.planning'),
+            ('id', str(id)),
+            ('date', str(event_date)),
+            ('start_time', str(start_time)),
+            ('end_time', str(end_time)),
+            ('location', location),
+            ('description', description),
+            ('max_registrations', str(max_registrations)),
+            ('available_seats', str(available_seats))
         ]
 
-        for elem_name in elements:
+        for elem_name, elem_value in elements:
+            ET.SubElement(event_elem, elem_name).text = elem_value
+
+        # Add empty elements
+        empty_elements = [
+            'first_name', 'last_name', 'email', 'telephone', 'birthday', 'company_email',
+            'company_id', 'source', 'user_role', 'invoice', 'calendar_link'
+        ]
+
+        for elem_name in empty_elements:
             ET.SubElement(event_elem, elem_name)
-
-        # Add speaker element
-        speaker_elem = ET.SubElement(event_elem, 'speaker')
-        ET.SubElement(speaker_elem, 'user_id').text = str(speaker_user_id)
-        ET.SubElement(speaker_elem, 'company_id').text = str(speaker_company_id)
-
-        # Set values for specific elements
-        event_elem.find('routing_key').text = 'frontend.crm'
-        event_elem.find('id').text = str(event_id)
-        event_elem.find('date').text = str(event_date)
-        event_elem.find('start_time').text = str(start_time)
-        event_elem.find('end_time').text = str(end_time)
-        event_elem.find('location').text = str(location)
-        event_elem.find('max_registrations').text = str(max_registrations)
-        event_elem.find('available_seats').text = str(available_seats)
-        event_elem.find('description').text = str(description)
 
         # Create XML string
         xml_str = ET.tostring(event_elem, encoding='utf-8', method='xml')
