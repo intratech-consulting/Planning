@@ -16,30 +16,12 @@ SCOPES = ['https://www.googleapis.com/auth/calendar']
 # Load environment variables from .env file
 load_dotenv()
 
-creds = service_account.Credentials.from_service_account_info(
-        {
-            "type": "service_account",
-            "project_id": os.getenv("PROJECT_ID"),
-            "private_key_id": os.getenv("PRIVATE_KEY_ID"),
-            "private_key": os.getenv("PRIVATE_KEY").replace("\\n", "\n"),
-            "client_email": os.getenv("CLIENT_EMAIL"),
-            "client_id": os.getenv("CLIENT_ID"),
-            "auth_uri": os.getenv("AUTH_URI"),
-            "token_uri": os.getenv("TOKEN_URI"),
-            "auth_provider_x509_cert_url": os.getenv("AUTH_PROVIDER_X509_CERT_URL"),
-            "client_x509_cert_url": os.getenv("CLIENT_X509_CERT_URL"),
-            "universe_domain": os.getenv("UNIVERSE_DOMAIN")
-        },
-        scopes=SCOPES
-    )
-
-service = build('calendar', 'v3', credentials=creds)
-
 # MySQL Database Connection
 DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_DATABASE = os.getenv("DB_DATABASE")
+
 
 def connect_to_mysql():
     try:
@@ -56,12 +38,12 @@ def connect_to_mysql():
         logging.error("Error connecting to MySQL: %s", e)
         return None
 
-def fetch_events(calendar_service, start_date, end_date, mysql_connection, interval_seconds=3600):
+def fetch_events(calendar_service, start_date, end_date, mysql_connection, interval_seconds=3):
     try:
         while True:
             # Fetch events from Google Calendar
             events_result = calendar_service.events().list(
-                calendarId= "9ecbb3026111b91a9ce21bfed88d67b95783a5a418c6d82aaa220776eb70f5d3@group.calendar.google.com",
+                calendarId="9ecbb3026111b91a9ce21bfed88d67b95783a5a418c6d82aaa220776eb70f5d3@group.calendar.google.com",
                 timeMin=start_date.isoformat() + 'Z',
                 timeMax=end_date.isoformat() + 'Z',
                 singleEvents=True,
@@ -107,16 +89,34 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
     except Exception as e:
         logging.error("An error occurred: %s", e)
 
-def start_event_fetching(calendar_service, interval_seconds=3600):
-    mysql_connection = connect_to_mysql()
-    if mysql_connection is None:
-        return
-
+if __name__ == "__main__":
     # Set start date to today and end date to 3 weeks before
     start_date = datetime.datetime.now()
     end_date = start_date - datetime.timedelta(weeks=3)
+   
+    creds = service_account.Credentials.from_service_account_info(
+        {
+            "type": "service_account",
+            "project_id": os.getenv("PROJECT_ID"),
+            "private_key_id": os.getenv("PRIVATE_KEY_ID"),
+            "private_key": os.getenv("PRIVATE_KEY").replace("\\n", "\n"),
+            "client_email": os.getenv("CLIENT_EMAIL"),
+            "client_id": os.getenv("CLIENT_ID"),
+            "auth_uri": os.getenv("AUTH_URI"),
+            "token_uri": os.getenv("TOKEN_URI"),
+            "auth_provider_x509_cert_url": os.getenv("AUTH_PROVIDER_X509_CERT_URL"),
+            "client_x509_cert_url": os.getenv("CLIENT_X509_CERT_URL"),
+            "universe_domain": os.getenv("UNIVERSE_DOMAIN")
+        },
+        scopes=SCOPES
+    )
 
-    fetch_events(calendar_service, start_date, end_date, mysql_connection, interval_seconds)
+    service = build('calendar', 'v3', credentials=creds)
 
-if __name__ == "__main__":
-    start_event_fetching(service)
+    # Connect to MySQL
+    mysql_connection = connect_to_mysql()
+    if mysql_connection is None:
+        exit()
+
+    # Fetch events
+    fetch_events(service, start_date, end_date, mysql_connection)
