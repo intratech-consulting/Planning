@@ -128,39 +128,7 @@ def create_new_calendar(service, mysql_connection, user_id):
 
     return calendar_id
 
-def add_event_to_calendar(event_id, service, calendar_id, mysql_connection):
-    # Fetch event details from the database
-    cursor = mysql_connection.cursor()
-    select_query = "SELECT * FROM Events WHERE Id = %s"
-    cursor.execute(select_query, (event_id,))
-    event_details = cursor.fetchone()
-
-    if event_details:
-        # Construct event body
-        event_body = {
-            'summary': event_details[1],  # Assuming summary is at index 1 in the database
-            'start': {
-                'dateTime': event_details[2].isoformat()+ 'Z',  # Assuming start datetime is at index 2
-            },
-            'end': {
-                'dateTime': event_details[3].isoformat()+ 'Z',  # Assuming end datetime is at index 3
-            },
-            'timeZone': 'Europe/Brussels',
-            'location': event_details[4],  # Assuming location is at index 4
-            'description': event_details[5]  # Assuming description is at index 5
-        }
-
-        # Insert event into Google Calendar
-        created_event = service.events().insert(calendarId=calendar_id, body=event_body).execute()
-        print('Event added to Google Calendar:', created_event['id'])
-    else:
-        print("Event with id", event_id, "not found in the database.")
-
-    cursor.close()
-
-if __name__ == '__main__':
-    user_id_from_rabbitmq = 6  # Replace with actual user ID received from RabbitMQ
-    event_id = 1
+def add_event_to_calendar(user_id, event_id):
     creds = service_account.Credentials.from_service_account_info(
         {
             "type": "service_account",
@@ -178,7 +146,58 @@ if __name__ == '__main__':
         scopes=SCOPES
     )
     service = build('calendar', 'v3', credentials=creds)
+
+    # MySQL Connection
     mysql_connection = connect_to_mysql()
-    calendar_id = create_calendar(user_id_from_rabbitmq)
-    ## add_event_to_calendar(event_id, service, calendar_id, mysql_connection)
+    if mysql_connection is None:
+        return None
+
+    # Fetch calendar_id associated with user_id
+    cursor = mysql_connection.cursor()
+    select_query = "SELECT CalendarId FROM User WHERE UserId = %s"
+    cursor.execute(select_query, (user_id,))
+    result = cursor.fetchone()
+    if result and result[0]:
+        calendar_id = result[0]
+    else:
+        print("Calendar ID not found for user with ID:", user_id)
+        cursor.close()
+        mysql_connection.close()
+        return
+
+    # Fetch event details from the database
+    select_query = "SELECT * FROM Events WHERE Id = %s"
+    cursor.execute(select_query, (event_id,))
+    event_details = cursor.fetchone()
+
+    if event_details:
+        # Construct event body
+        event_body = {
+            'summary': event_details[1],  # Assuming summary is at index 1 in the database
+            'start': {
+                'dateTime': event_details[2].isoformat()+ 'Z',  # Assuming start datetime is at index 2
+            },
+            'end': {
+                'dateTime': event_details[3].isoformat()+ 'Z',  # Assuming end datetime is at index 3
+            },
+            'timeZone': 'Europe/Brussels',
+            'location': event_details[4] + f" - Max Registrations: {event_details[6]}",  # Assuming location is at index 4
+            'description': event_details[5]  # Assuming description is at index 5
+        }
+
+        # Insert event into Google Calendar
+        created_event = service.events().insert(calendarId=calendar_id, body=event_body).execute()
+        print('Event added to Google Calendar:', created_event['id'])
+    else:
+        print("Event with id", event_id, "not found in the database.")
+
+    cursor.close()
     mysql_connection.close()
+
+
+if __name__ == '__main__':
+    user_id_from_rabbitmq = 26 # Replace with actual user ID received from RabbitMQ
+    event_id = 6  # Replace with actual event ID received from RabbitMQ
+    create_calendar(user_id_from_rabbitmq)
+    add_event_to_calendar(user_id_from_rabbitmq, event_id)
+    

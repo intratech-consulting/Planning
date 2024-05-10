@@ -3,6 +3,7 @@ import pika
 from lxml import etree
 from dotenv import load_dotenv
 import mysql.connector
+import calendar_events
 
 # Load environment variables from .env file
 load_dotenv()
@@ -101,6 +102,20 @@ XSD_SCHEMAS = {
             </xs:element>
         </xs:schema>
     """,
+    'attendance':"""
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:element name="attendance">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="routing_key" type="xs:string"/>
+                        <xs:element name="id" type="xs:string"/>
+                        <xs:element name="user_id" type="xs:string"/>
+                        <xs:element name="event_id" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:schema>
+    """,
 }
 
 # Function to validate XML against embedded XSD schema
@@ -171,6 +186,19 @@ def save_company_to_database(root_element):
     except Exception as e:
         print(f"Error saving company data to database: {str(e)}")
 
+#Function to extract attendance data and funtioncall to system
+def send_attendance_to_system(root_element):
+    try:
+        user_id = root_element.find('user_id').text
+        event_id = root_element.find('event_id').text
+        
+        # Call function to add event to calendar using extracted user_id and event_id
+        calendar_events.add_event_to_calendar(user_id, event_id)
+        
+        print("Event added to calendar successfully.")
+    except Exception as e:
+        print(f"Error adding event to calendar: {str(e)}")
+
 # Callback function for consuming messages
 def callback(ch, method, properties, body):
     try:
@@ -186,6 +214,8 @@ def callback(ch, method, properties, body):
                 save_user_to_database(root_element)
             elif xml_type == 'company':
                 save_company_to_database(root_element)
+            elif xml_type == 'attendance':
+                send_attendance_to_system(root_element)
             else:
                 print(f"No handler defined for XML type: {xml_type}")
         else:
@@ -195,8 +225,8 @@ def callback(ch, method, properties, body):
         print(f"Error processing message: {str(e)}")
 
 # Connect to RabbitMQ server
-credentials = pika.PlainCredentials('user', 'password')
-connection = pika.BlockingConnection(pika.ConnectionParameters(host='10.2.160.51', credentials=credentials))
+credentials = pika.PlainCredentials('RABBITMQ_USER', 'RABBITMQ_PASSWORD')
+connection = pika.BlockingConnection(pika.ConnectionParameters(host='RABBITMQ_HOST', credentials=credentials))
 channel = connection.channel()
 
 # Declare the queue
