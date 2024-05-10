@@ -54,14 +54,17 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
             if events:
                 try:
                     cursor = mysql_connection.cursor()
-                    insert_query = "INSERT INTO Events (summary, start_datetime, end_datetime, location, description) VALUES (%s, %s, %s, %s, %s)"
+                    insert_query = "INSERT INTO Events (summary, start_datetime, end_datetime, location, description, max_registrations, available_seats) VALUES (%s, %s, %s, %s, %s, %s, %s)"
                     for event in events:
                         summary = event['summary']
                         start = event['start'].get('dateTime', event['start'].get('date'))
                         end = event['end'].get('dateTime', event['end'].get('date'))
-                        location = event.get('location', 'N/A')
+                        location_with_max = event.get('location', 'N/A')
+                        # Split location to extract only location
+                        location = location_with_max.split('-')[0].strip() if '-' in location_with_max else location_with_max.strip()
+                        max_registrations = 0  # Set max_registrations to 0, as it will not be extracted from the location field
                         description = event.get('description', 'N/A')
-
+                        available_seats = 50
                         # Check if event already exists in the database
                         event_exists_query = "SELECT COUNT(*) FROM Events WHERE summary = %s AND start_datetime = %s AND end_datetime = %s"
                         cursor.execute(event_exists_query, (summary, start, end))
@@ -69,7 +72,7 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
 
                         if event_count == 0:
                             # Insert event into MySQL table if it doesn't exist
-                            cursor.execute(insert_query, (summary, start, end, location, description))
+                            cursor.execute(insert_query, (summary, start, end, location, description, max_registrations, available_seats))
                             logging.info("Event inserted into MySQL table: %s", summary)
                         else:
                             logging.info("Event already exists in MySQL table. Skipping insertion: %s", summary)
