@@ -181,7 +181,7 @@ def add_event_to_calendar(user_id, event_id):
                 'dateTime': event_details[3].isoformat()+ 'Z',  # Assuming end datetime is at index 3
             },
             'timeZone': 'Europe/Brussels',
-            'location': event_details[4] + f" - Max Registrations: {event_details[6]}",  # Assuming location is at index 4
+            'location': event_details[4],  # Assuming location is at index 4
             'description': event_details[5]  # Assuming description is at index 5
         }
 
