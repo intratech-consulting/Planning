@@ -168,5 +168,5 @@ def publish_event_xml(event_id):
 
 # Example usage
 if __name__ == '__main__':
-    user_id_to_publish = '1'  # Provide the user_id for which you want to publish the XML
-    publish_user_xml(user_id_to_publish)
+    event_id_to_publish = '1'  # Provide the user_id for which you want to publish the XML
+    publish_event_xml(event_id_to_publish)
