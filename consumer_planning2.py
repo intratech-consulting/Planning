@@ -101,6 +101,20 @@ XSD_SCHEMAS = {
             </xs:element>
         </xs:schema>
     """,
+    'attendance':"""
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:element name="attendance">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="routing_key" type="xs:string"/>
+                        <xs:element name="id" type="xs:string"/>
+                        <xs:element name="user_id" type="xs:string"/>
+                        <xs:element name="event_id" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:schema>
+    """,
 }
 
 # Function to validate XML against embedded XSD schema
