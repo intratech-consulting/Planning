@@ -1,5 +1,6 @@
 import datetime
 import os
+import publisher_planning
 from dotenv import load_dotenv
 import mysql.connector
 from googleapiclient.discovery import build
@@ -73,11 +74,11 @@ def create_calendar(user_id):
     else:
         # Create a new calendar
         calendar_id = create_new_calendar(service, mysql_connection, user_id)
+        return calendar_id
 
     cursor.close()
     mysql_connection.close()
-
-    return calendar_id
+    
 
 def create_new_calendar(service, mysql_connection, user_id):
     # Create a new calendar
@@ -123,6 +124,7 @@ def create_new_calendar(service, mysql_connection, user_id):
         cursor.execute(update_query, (calendar_id, calendar_link, user_id))
         mysql_connection.commit()
         print("Calendar ID and link saved to the database for user:", user_id)
+        publisher_planning.publish_user_xml(user_id)
         cursor.close()
     except mysql.connector.Error as e:
         print("Error updating database:", e)
@@ -190,6 +192,7 @@ def add_event_to_calendar(user_id, event_id):
         # Insert event into Google Calendar
         created_event = service.events().insert(calendarId=calendar_id, body=event_body).execute()
         print('Event added to Google Calendar:', created_event['id'])
+        publisher_planning.publish_event_xml(event_id)
     else:
         print("Event with id", event_id, "not found in the database.")
 
@@ -198,8 +201,8 @@ def add_event_to_calendar(user_id, event_id):
 
 
 if __name__ == '__main__':
-    user_id_from_rabbitmq = 25 # Replace with actual user ID received from RabbitMQ
-    event_id = 7  # Replace with actual event ID received from RabbitMQ
+    user_id_from_rabbitmq = 25 # Hardcoded, make it a comment when we use function calls
+    event_id = 7  # Hardcoded, make it a comment when we use function calls
     create_calendar(user_id_from_rabbitmq)
     add_event_to_calendar(user_id_from_rabbitmq, event_id)
     
