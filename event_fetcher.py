@@ -60,9 +60,10 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
                         start = event['start'].get('dateTime', event['start'].get('date'))
                         end = event['end'].get('dateTime', event['end'].get('date'))
                         location_with_max = event.get('location', 'N/A')
-                        # Split location to extract only location
-                        location = location_with_max.split('-')[0].strip() if '-' in location_with_max else location_with_max.strip()
-                        max_registrations = 0  # Set max_registrations to 0, as it will not be extracted from the location field
+                        # Split location to extract location and max_registrations
+                        location_parts = location_with_max.split('-')
+                        location = location_parts[0].strip() if len(location_parts) >= 1 else 'N/A'  # Extract location
+                        max_registrations = int(location_parts[1]) if len(location_parts) >= 2 else 0  # Extract max_registrations
                         description = event.get('description', 'N/A')
                         available_seats = 50
                         # Check if event already exists in the database

@@ -92,6 +92,8 @@ def create_new_calendar(service, mysql_connection, user_id):
     created_calendar = service.calendars().insert(body=calendar).execute()
     print('Calendar created:', created_calendar['id'])
     calendar_id = created_calendar['id']
+    calendar_link = f"https://calendar.google.com/calendar/embed?src={calendar_id}"
+    print('Calendar link:', calendar_link)
 
     # Share the calendar publicly
     rule = {
@@ -114,16 +116,16 @@ def create_new_calendar(service, mysql_connection, user_id):
     service.acl().insert(calendarId=calendar_id, body=rule).execute()
     print('Permissions granted for service account:', SERVICE_ACCOUNT_EMAIL)
 
-    # Save calendar ID to the database
+    # Save calendar ID and link to the database
     try:
         cursor = mysql_connection.cursor()
-        insert_query = "UPDATE User SET CalendarId = %s WHERE UserId = %s"
-        cursor.execute(insert_query, (calendar_id, user_id))
+        update_query = "UPDATE User SET CalendarId = %s, CalendarLink = %s WHERE UserId = %s"
+        cursor.execute(update_query, (calendar_id, calendar_link, user_id))
         mysql_connection.commit()
-        print("Calendar ID saved to the database for user:", user_id)
+        print("Calendar ID and link saved to the database for user:", user_id)
         cursor.close()
     except mysql.connector.Error as e:
-        print("Error inserting calendar ID into database:", e)
+        print("Error updating database:", e)
         mysql_connection.rollback()
 
     return calendar_id
