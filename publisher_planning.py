@@ -87,9 +87,9 @@ def publish_user_xml(user_id):
         # Construct XML document based on schema
         user_elem = ET.Element('user')
 
-        # Define all elements from the schema with empty values
+         # Define all elements from the schema with empty values
         elements = [
-            'routing_key', 'crud_operation', 'id', 'first_name', 'last_name', 'email',
+            'routing_key', 'user_id', 'first_name', 'last_name', 'email',
             'telephone', 'birthday', 'company_email', 'company_id', 'source',
             'user_role', 'invoice', 'calendar_link'
         ]
@@ -104,9 +104,6 @@ def publish_user_xml(user_id):
             ET.SubElement(address_elem, sub_elem_name)
 
         # Set values for specific elements
-        user_elem.find('id').text = ''  # Empty for now
-        user_elem.find('crud_operation').text = 'create'
-        user_elem.find('source').text = 'planning'
         user_elem.find('user_id').text = str(user_id)
         user_elem.find('calendar_link').text = calendar_link or ''  # Use calendar_link or empty string
 
@@ -139,27 +136,26 @@ def publish_event_xml(event_id):
         # Define elements with extracted values
         elements = [
             ('routing_key', 'event.planning'),
+            ('crud_operation', 'create'),
             ('id', str(id)),
             ('date', str(event_date)),
             ('start_time', str(start_time)),
             ('end_time', str(end_time)),
             ('location', location),
             ('description', description),
-            ('max_registrations', str(max_registrations)),
-            ('available_seats', str(available_seats))
         ]
 
         for elem_name, elem_value in elements:
             ET.SubElement(event_elem, elem_name).text = elem_value
 
-        # Add empty elements
-        empty_elements = [
-            'first_name', 'last_name', 'email', 'telephone', 'birthday', 'company_email',
-            'company_id', 'source', 'user_role', 'invoice', 'calendar_link'
-        ]
+        # Add speaker element with sub-elements between location and max_registrations
+        speaker_elem = ET.SubElement(event_elem, 'speaker')
+        ET.SubElement(speaker_elem, 'user_id')
+        ET.SubElement(speaker_elem, 'company_id')
 
-        for elem_name in empty_elements:
-            ET.SubElement(event_elem, elem_name)
+        # Add max_registrations and available_seats elements
+        ET.SubElement(event_elem, 'max_registrations').text = str(max_registrations)
+        ET.SubElement(event_elem, 'available_seats').text = str(available_seats)
 
         # Create XML string
         xml_str = ET.tostring(event_elem, encoding='utf-8', method='xml')
