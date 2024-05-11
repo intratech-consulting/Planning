@@ -49,7 +49,7 @@ def main(timestamp):
         logger.info('XML is valid')
     else:
         logger.error('XML is not valid')
-    credentials = pika.PlainCredentials('RABBITMQ_USER', 'RABBITMQ_PASSWORD')
+    credentials = pika.PlainCredentials(os.getenv('RABBITMQ_USER'), os.getenv('RABBITMQ_PASSWORD'))
     connection = pika.BlockingConnection(pika.ConnectionParameters(host=os.getenv('RABBITMQ_HOST'), credentials=credentials))
     channel = connection.channel()
     channel.queue_declare(queue='heartbeat_queue', durable=True)

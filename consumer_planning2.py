@@ -344,8 +344,8 @@ def callback(ch, method, properties, body):
         print(f"Error processing message: {str(e)}")
 
 # Connect to RabbitMQ server
-credentials = pika.PlainCredentials('RABBITMQ_USER', 'RABBITMQ_PASSWORD')
-connection = pika.BlockingConnection(pika.ConnectionParameters(host='RABBITMQ_HOST', credentials=credentials))
+credentials = pika.PlainCredentials(os.getenv('RABBITMQ_USER'), os.getenv('RABBITMQ_PASSWORD'))
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=os.getenv('RABBITMQ_HOST'), credentials=credentials))
 channel = connection.channel()
 
 # Declare the queue
