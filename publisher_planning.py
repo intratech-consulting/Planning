@@ -87,9 +87,9 @@ def publish_user_xml(user_id):
         # Construct XML document based on schema
         user_elem = ET.Element('user')
 
-         # Define all elements from the schema with empty values
+        # Define all elements from the schema with empty values
         elements = [
-            'routing_key', 'user_id', 'first_name', 'last_name', 'email',
+            'routing_key', 'crud_operation', 'id', 'first_name', 'last_name', 'email',
             'telephone', 'birthday', 'company_email', 'company_id', 'source',
             'user_role', 'invoice', 'calendar_link'
         ]
@@ -104,6 +104,9 @@ def publish_user_xml(user_id):
             ET.SubElement(address_elem, sub_elem_name)
 
         # Set values for specific elements
+        user_elem.find('id').text = ''  # Empty for now
+        user_elem.find('crud_operation').text = 'create'
+        user_elem.find('source').text = 'planning'
         user_elem.find('user_id').text = str(user_id)
         user_elem.find('calendar_link').text = calendar_link or ''  # Use calendar_link or empty string
 
