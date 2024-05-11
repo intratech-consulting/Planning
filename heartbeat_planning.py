@@ -3,7 +3,9 @@ import pika, sys, os
 import time
 from datetime import datetime
 import logging
+from dotenv import load_dotenv
 TEAM = 'planning'
+load_dotenv()
 def main(timestamp):
     global TEAM
     logger = logging.getLogger(__name__)
@@ -46,8 +48,8 @@ def main(timestamp):
         logger.info('XML is valid')
     else:
         logger.error('XML is not valid')
-    credentials = pika.PlainCredentials('user', 'password')
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='10.2.160.54', credentials=credentials))
+    credentials = pika.PlainCredentials('RABBITMQ_USER', 'RABBITMQ_PASSWORD')
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host='RABBITMQ_HOST', credentials=credentials))
     channel = connection.channel()
     channel.queue_declare(queue='heartbeat_queue', durable=True)
     channel.basic_publish(exchange='', routing_key='heartbeat_queue', body=heartbeat_xml)
