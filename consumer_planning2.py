@@ -289,12 +289,17 @@ def validate_xml(xml_str):
 def get_database_connection():
     logger.error("databasefunction")
     logger.debug(os.getenv('DB_HOST'))
-    return mysql.connector.connect(
-        host=os.getenv('DB_HOST'),
-        user=os.getenv('DB_USER'),
-        password=os.getenv('DB_PASSWORD'),
-        database=os.getenv('DB_DATABASE')
-    )
+    try: 
+        connection = mysql.connector.connect(
+            host=os.getenv('DB_HOST'),
+            user=os.getenv('DB_USER'),
+            password=os.getenv('DB_PASSWORD'),
+            database=os.getenv('DB_DATABASE')
+        )
+        logger.debug(connection)
+    except mysql.connector.Error as e:
+        logger.error(e)
+        return connection
 
 # Function to save user data to the database
 def save_user_to_database(root_element):
