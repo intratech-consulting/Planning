@@ -382,6 +382,7 @@ def callback(ch, method, properties, body):
     try:
         xml_content = body.decode('utf-8')
         is_valid, root_element = validate_xml(xml_content)
+        logger.debug('validate', xml_content)
         
         if is_valid:
             xml_type = root_element.tag
