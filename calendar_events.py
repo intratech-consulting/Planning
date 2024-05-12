@@ -152,13 +152,13 @@ def create_new_calendar(service, mysql_connection, user_id):
     # Save calendar ID and link to the database
     try:
         cursor = mysql_connection.cursor()
-        logger.debug(update_query)
         logger.debug(calendar_id)
         logger.debug(calendar_link)
         update_query = "UPDATE User SET CalendarId = %s, CalendarLink = %s WHERE UserId = %s"
+        logger.debug(update_query)
         cursor.execute(update_query, (calendar_id, calendar_link, user_id))
         mysql_connection.commit()
-        print("Calendar ID and link saved to the database for user:", user_id)
+        logger.debug(f"Calendar ID and link saved to the database for user:{user_id}")
         publisher_planning.publish_user_xml(user_id)
         cursor.close()
     except mysql.connector.Error as e:
