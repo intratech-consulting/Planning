@@ -162,7 +162,7 @@ def create_new_calendar(service, mysql_connection, user_id):
         publisher_planning.publish_user_xml(user_id)
         cursor.close()
     except mysql.connector.Error as e:
-        print("Error updating database:", e)
+        logger.error(f"Error updating database:{e}")
         mysql_connection.rollback()
 
     return calendar_id
