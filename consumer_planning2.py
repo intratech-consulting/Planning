@@ -282,6 +282,7 @@ def validate_xml(xml_str):
         else:
             return False, f"No schema available for the received XML root element '{root.tag}'"
     except etree.XMLSchemaError as e:
+        logger.debug(e)
         return False, str(e)  # Invalid XML
 
 # Function to establish a database connection
