@@ -20,8 +20,7 @@ RUN pip install --no-cache-dir \
     pytz \
     supervisor \
     sqlalchemy \
-    pymysql \
-    sys 
+    pymysql 
 
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
