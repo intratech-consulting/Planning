@@ -287,11 +287,11 @@ def validate_xml(xml_str):
 
 # Function to establish a database connection
 def get_database_connection():
-    logger.error("databasefunction")
     logger.debug(os.getenv('DB_HOST'))
     logger.debug(os.getenv('DB_USER'))
     logger.debug(os.getenv('DB_PASSWORD'))
     logger.debug(os.getenv('DB_DATABASE'))
+    
     try: 
         connection = mysql.connector.connect(
             host=os.getenv('DB_HOST'),
@@ -300,10 +300,18 @@ def get_database_connection():
             database=os.getenv('DB_DATABASE')
         )
         logger.debug(connection)
-    except :
-        logger.error("error happened")
-    logger.info(connection)
-    return connection
+        logger.info(connection)  # This line is not recommended; use it for debugging only
+
+        return connection  # Return the connection object if successful
+    except Exception as e:
+        logger.error(f"Error connecting to database: {str(e)}")
+        # If an exception occurs during connection, handle it here
+        # For example, log the error and return None or raise the exception
+
+        # Handle the error appropriately based on your application's needs
+        # Example:
+        # raise  # Rethrow the exception or return None, depending on your error handling strategy
+        return None  # Return None if connection fails (handle this appropriately in the caller)
 
 # Function to save user data to the database
 def save_user_to_database(root_element):
@@ -334,33 +342,33 @@ def save_user_to_database(root_element):
             else:
                 company_id = None  # Set company_id to None if not provided
             
-            logger.error("database connection")
+            # Get database connection
             conn = get_database_connection()
-            logger.debug(root_element)
-            cursor = conn.cursor()
+            
+            if conn is not None:  # Ensure connection is established successfully
+                cursor = conn.cursor()
 
-            # Prepare SQL query and values
-            sql = "INSERT INTO User (UserId, First_name, Last_name, Email, CompanyId) VALUES (%s, %s, %s, %s, %s)"
-            values = (user_id, first_name, last_name, email, company_id)
-            
-            # Execute SQL query
-            cursor.execute(sql, values)
-            conn.commit()
-            
-            print("User data saved to the database successfully.")
-            
-            cursor.close()
-            conn.close()
+                # Prepare SQL query and values
+                sql = "INSERT INTO User (UserId, First_name, Last_name, Email, CompanyId) VALUES (%s, %s, %s, %s, %s)"
+                values = (user_id, first_name, last_name, email, company_id)
+                
+                # Execute SQL query
+                cursor.execute(sql, values)
+                conn.commit()
+                
+                print("User data saved to the database successfully.")
+                
+                cursor.close()
+                conn.close()
 
-            calendar_events.create_calendar(user_id)
-        
+                calendar_events.create_calendar(user_id)
+            else:
+                logger.error("Database connection failed. Unable to save user data.")
         else:
-            logger.debug('in else')
-            print("One or more required elements (id, first_name, last_name, email) are missing in the XML.")
-    
+            logger.debug('One or more required elements (id, first_name, last_name, email) are missing in the XML.')
+
     except Exception as e:
         logger.error(f"Error saving user data to database: {str(e)}")
-        print(f"Error saving user data to database: {str(e)}")
 
 
 # Function to save company data to the database
