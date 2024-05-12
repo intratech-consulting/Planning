@@ -264,7 +264,7 @@ def get_database_connection():
 # Function to save user data to the database
 def save_user_to_database(root_element):
     try:
-        user_id = root_element.find('user_id').text
+        id = root_element.find('id').text
         first_name = root_element.find('first_name').text
         last_name = root_element.find('last_name').text
         email = root_element.find('email').text
@@ -274,7 +274,7 @@ def save_user_to_database(root_element):
         cursor = conn.cursor()
 
         sql = "INSERT INTO User (UserId, First_name, Last_name, Email, CompanyId) VALUES (%s, %s, %s, %s, %s)"
-        values = (user_id, first_name, last_name, email, company_id)
+        values = (id, first_name, last_name, email, company_id)
         cursor.execute(sql, values)
 
         conn.commit()
