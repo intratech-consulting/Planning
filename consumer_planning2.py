@@ -4,6 +4,14 @@ from lxml import etree
 from dotenv import load_dotenv
 import mysql.connector
 import calendar_events
+import logging
+
+# Configure logging
+logging.basicConfig(
+    filename='/var/log/consumer.log',
+    level=logging.INFO,  # Set the logging level to INFO (change as needed)
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 # Load environment variables from .env file
 load_dotenv()
