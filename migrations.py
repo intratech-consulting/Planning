@@ -63,7 +63,7 @@ def create_tables():
             Email VARCHAR(100),
             CompanyId VARCHAR(255),
             CalendarId VARCHAR(255),
-            CalendarLink VARCHAR(255),
+            CalendarLink VARCHAR(255)
             
         )
         """,
