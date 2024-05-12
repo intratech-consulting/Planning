@@ -1,7 +1,7 @@
 services:
   mysql:
     image: mysql
-    container_name: mysql_MasterUuid
+    container_name: mysql_planning
     restart: always
     ports:
       - "7001:3306"
