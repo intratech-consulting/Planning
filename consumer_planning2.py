@@ -271,7 +271,7 @@ XSD_SCHEMAS = {
 # Function to validate XML against embedded XSD schema
 def validate_xml(xml_str):
     try:
-        logger.debug('xml', xml_str)
+        logger.debug(xml_str)
         root = etree.fromstring(xml_str)
         if root.tag in XSD_SCHEMAS:
             xsd_str = XSD_SCHEMAS[root.tag]
