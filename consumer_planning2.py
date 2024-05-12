@@ -323,6 +323,7 @@ def save_user_to_database(root_element):
             else:
                 company_id = None  # Set company_id to None if not provided
             
+            logger.error("database connection")
             conn = get_database_connection()
             logger.debug(root_element)
             cursor = conn.cursor()
