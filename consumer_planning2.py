@@ -289,6 +289,9 @@ def validate_xml(xml_str):
 def get_database_connection():
     logger.error("databasefunction")
     logger.debug(os.getenv('DB_HOST'))
+    logger.debug(os.getenv('DB_USER'))
+    logger.debug(os.getenv('DB_PASSWORD'))
+    logger.debug(os.getenv('DB_DATABASE'))
     try: 
         connection = mysql.connector.connect(
             host=os.getenv('DB_HOST'),
