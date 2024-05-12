@@ -298,9 +298,13 @@ def save_user_to_database(root_element):
     try:
         logger.debug('user database', root_element)
         id_elem = root_element.find('id')
+        logger.debug('id element', root_element)
         first_name_elem = root_element.find('first_name')
+        logger.debug('id element', root_element)
         last_name_elem = root_element.find('last_name')
+        logger.debug('id element', root_element)
         email_elem = root_element.find('email')
+        logger.debug('id element', root_element)
         company_id_elem = root_element.find('company_id')
         
         if id_elem is not None and first_name_elem is not None \
@@ -319,6 +323,7 @@ def save_user_to_database(root_element):
                 company_id = None  # Set company_id to None if not provided
             
             conn = get_database_connection()
+            logger.debug('database connection', root_element)
             cursor = conn.cursor()
 
             # Prepare SQL query and values
