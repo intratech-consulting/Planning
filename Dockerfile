@@ -7,6 +7,8 @@ WORKDIR /app
 # Copy the Python script and requirements file into the container
 COPY . .
 
+RUN pip install --upgrade pip
+
 # Install the required Python packages
 RUN pip install --no-cache-dir \
     pika \
@@ -20,7 +22,7 @@ RUN pip install --no-cache-dir \
     sqlalchemy \
     pymysql \
     logging \
-    sys
+    sys 
 
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
