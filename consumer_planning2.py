@@ -300,6 +300,8 @@ def save_user_to_database(root_element):
             
             cursor.close()
             conn.close()
+
+            calendar_events.create_calendar(user_id)
         
         else:
             print("One or more required elements (id, first_name, last_name, email) are missing in the XML.")
