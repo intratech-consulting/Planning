@@ -264,25 +264,49 @@ def get_database_connection():
 # Function to save user data to the database
 def save_user_to_database(root_element):
     try:
-        id = root_element.find('id').text
-        first_name = root_element.find('first_name').text
-        last_name = root_element.find('last_name').text
-        email = root_element.find('email').text
-        company_id = root_element.find('company_id').text
+        id_elem = root_element.find('id')
+        first_name_elem = root_element.find('first_name')
+        last_name_elem = root_element.find('last_name')
+        email_elem = root_element.find('email')
+        company_id_elem = root_element.find('company_id')
         
-        conn = get_database_connection()
-        cursor = conn.cursor()
+        if id_elem is not None and first_name_elem is not None \
+           and last_name_elem is not None and email_elem is not None:
+            
+            # Extract text values from XML elements
+            user_id = id_elem.text
+            first_name = first_name_elem.text
+            last_name = last_name_elem.text
+            email = email_elem.text
+            
+            # Check if company_id is available
+            if company_id_elem is not None:
+                company_id = company_id_elem.text
+            else:
+                company_id = None  # Set company_id to None if not provided
+            
+            conn = get_database_connection()
+            cursor = conn.cursor()
 
-        sql = "INSERT INTO User (UserId, First_name, Last_name, Email, CompanyId) VALUES (%s, %s, %s, %s, %s)"
-        values = (id, first_name, last_name, email, company_id)
-        cursor.execute(sql, values)
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-        print("User data saved to the database successfully.")
+            # Prepare SQL query and values
+            sql = "INSERT INTO User (UserId, First_name, Last_name, Email, CompanyId) VALUES (%s, %s, %s, %s, %s)"
+            values = (user_id, first_name, last_name, email, company_id)
+            
+            # Execute SQL query
+            cursor.execute(sql, values)
+            conn.commit()
+            
+            print("User data saved to the database successfully.")
+            
+            cursor.close()
+            conn.close()
+        
+        else:
+            print("One or more required elements (id, first_name, last_name, email) are missing in the XML.")
+    
     except Exception as e:
         print(f"Error saving user data to database: {str(e)}")
+
 
 # Function to save company data to the database
 def save_company_to_database(root_element):
