@@ -21,7 +21,6 @@ RUN pip install --no-cache-dir \
     supervisor \
     sqlalchemy \
     pymysql \
-    logging \
     sys 
 
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
