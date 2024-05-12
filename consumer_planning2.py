@@ -299,7 +299,8 @@ def get_database_connection():
         logger.debug(connection)
     except mysql.connector.Error as e:
         logger.error(e)
-        return connection
+    logger.info(connection)
+    return connection
 
 # Function to save user data to the database
 def save_user_to_database(root_element):
