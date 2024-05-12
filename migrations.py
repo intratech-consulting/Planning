@@ -61,8 +61,8 @@ def create_tables():
             First_name VARCHAR(50),
             Last_name VARCHAR(50),
             Email VARCHAR(100),
-            CompanyId INT,
-            CalendarId INT,
+            CompanyId VARCHAR(255),
+            CalendarId VARCHAR(255),
             CalendarLink VARCHAR(255),
             FOREIGN KEY (CompanyId) REFERENCES Company(CompanyId)
         )
