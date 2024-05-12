@@ -287,6 +287,8 @@ def validate_xml(xml_str):
 
 # Function to establish a database connection
 def get_database_connection():
+    logger.error("databasefunction")
+    logger.debug(os.getenv('DB_HOST'))
     return mysql.connector.connect(
         host=os.getenv('DB_HOST'),
         user=os.getenv('DB_USER'),
