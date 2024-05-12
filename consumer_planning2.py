@@ -347,6 +347,7 @@ def save_user_to_database(root_element):
             print("One or more required elements (id, first_name, last_name, email) are missing in the XML.")
     
     except Exception as e:
+        logger.error(f"Error saving user data to database: {str(e)}")
         print(f"Error saving user data to database: {str(e)}")
 
 
