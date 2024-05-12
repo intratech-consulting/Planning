@@ -50,7 +50,7 @@ def create_tables():
     queries = [
         """
         CREATE TABLE IF NOT EXISTS Company (
-            CompanyId INT PRIMARY KEY,
+            CompanyId INT AUTO_INCREMENT PRIMARY KEY,
             Name VARCHAR(100),
             Email VARCHAR(100)
         )
