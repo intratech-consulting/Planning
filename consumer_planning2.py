@@ -271,6 +271,7 @@ XSD_SCHEMAS = {
 # Function to validate XML against embedded XSD schema
 def validate_xml(xml_str):
     try:
+        logger.debug('xml', xml_str)
         root = etree.fromstring(xml_str)
         if root.tag in XSD_SCHEMAS:
             xsd_str = XSD_SCHEMAS[root.tag]
@@ -295,6 +296,7 @@ def get_database_connection():
 # Function to save user data to the database
 def save_user_to_database(root_element):
     try:
+        logger.debug('user database', root_element)
         id_elem = root_element.find('id')
         first_name_elem = root_element.find('first_name')
         last_name_elem = root_element.find('last_name')
