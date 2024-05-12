@@ -1,4 +1,15 @@
 services:
+  mysql:
+    image: mysql
+    container_name: mysql_MasterUuid
+    restart: always
+    ports:
+      - "5001:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: mypassword
+    volumes:
+      - planning-mysql-data:/var/lib/mysql
+
   container:
     image: planning/planning:latest
     container_name: planning-container
@@ -7,3 +18,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "7272:7272"
+
+volumes:
+  planning-mysql-data:
