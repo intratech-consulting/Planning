@@ -109,3 +109,31 @@ except KeyboardInterrupt:
     print('Interrupted. Closing connection.')
     connection.close()
 
+
+
+
+#notes
+
+
+
+def save_user_to_database(root_element):
+    try:
+        id = root_element.find('id').text
+        first_name = root_element.find('first_name').text
+        last_name = root_element.find('last_name').text
+        email = root_element.find('email').text
+        company_id = root_element.find('company_id').text
+        
+        conn = get_database_connection()
+        cursor = conn.cursor()
+
+        sql = "INSERT INTO User (UserId, First_name, Last_name, Email, CompanyId) VALUES (%s, %s, %s, %s, %s)"
+        values = (id, first_name, last_name, email, company_id)
+        cursor.execute(sql, values)
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+        print("User data saved to the database successfully.")
+    except Exception as e:
+        print(f"Error saving user data to database: {str(e)}")
