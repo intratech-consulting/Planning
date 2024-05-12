@@ -297,8 +297,8 @@ def get_database_connection():
             database=os.getenv('DB_DATABASE')
         )
         logger.debug(connection)
-    except mysql.connector.Error as e:
-        logger.error(e)
+    except :
+        logger.error("error happened")
     logger.info(connection)
     return connection
 
