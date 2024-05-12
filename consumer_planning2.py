@@ -295,6 +295,7 @@ def get_database_connection():
     try: 
         connection = mysql.connector.connect(
             host=os.getenv('DB_HOST'),
+            port=os.getenv('DB_PORT', 3306),
             user=os.getenv('DB_USER'),
             password=os.getenv('DB_PASSWORD'),
             database=os.getenv('DB_DATABASE')
