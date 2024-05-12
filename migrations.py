@@ -50,7 +50,7 @@ def create_tables():
     queries = [
         """
         CREATE TABLE IF NOT EXISTS Company (
-            CompanyId INT AUTO_INCREMENT PRIMARY KEY,
+            CompanyId INT PRIMARY KEY,
             Name VARCHAR(100),
             Email VARCHAR(100)
         )
@@ -64,7 +64,7 @@ def create_tables():
             CompanyId VARCHAR(255),
             CalendarId VARCHAR(255),
             CalendarLink VARCHAR(255),
-            FOREIGN KEY (CompanyId) REFERENCES Company(CompanyId)
+            
         )
         """,
         """
