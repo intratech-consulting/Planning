@@ -5,6 +5,36 @@ from dotenv import load_dotenv
 import mysql.connector
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
+import logging
+
+# Create a custom logger
+logger = logging.getLogger(__name__)
+
+# Set the level of this logger.
+# DEBUG, INFO, WARNING, ERROR, CRITICAL can be used depending on the granularity of log you want.
+logger.setLevel(logging.DEBUG)
+
+# Create handlers
+c_handler = logging.StreamHandler()
+s_handler = logging.StreamHandler(sys.stdout)
+c_handler.setLevel(logging.DEBUG)
+s_handler.setLevel(logging.DEBUG)  # Set level to DEBUG
+
+# Create formatters and add it to handlers
+c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+s_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+c_handler.setFormatter(c_format)
+s_handler.setFormatter(s_format)
+
+# Add handlers to the logger
+logger.addHandler(c_handler)
+logger.addHandler(s_handler)
+
+logger.debug('This is a debug message')
+logger.info('This is an info message')
+
+logger.warning('This is a warning')
+logger.error('This is an error')
 
 # Load environment variables from .env file
 load_dotenv()
@@ -120,6 +150,9 @@ def create_new_calendar(service, mysql_connection, user_id):
     # Save calendar ID and link to the database
     try:
         cursor = mysql_connection.cursor()
+        logger.debug(update_query)
+        logger.debug(calendar_id)
+        logger.debug(calendar_link)
         update_query = "UPDATE User SET CalendarId = %s, CalendarLink = %s WHERE UserId = %s"
         cursor.execute(update_query, (calendar_id, calendar_link, user_id))
         mysql_connection.commit()
