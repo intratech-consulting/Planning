@@ -310,7 +310,7 @@ def save_user_to_database(root_element):
         
         if id_elem is not None and first_name_elem is not None \
            and last_name_elem is not None and email_elem is not None:
-            
+            logger.debug('in if')
             # Extract text values from XML elements
             user_id = id_elem.text
             first_name = first_name_elem.text
@@ -324,7 +324,7 @@ def save_user_to_database(root_element):
                 company_id = None  # Set company_id to None if not provided
             
             conn = get_database_connection()
-            logger.debug('database connection', root_element)
+            logger.debug(root_element)
             cursor = conn.cursor()
 
             # Prepare SQL query and values
@@ -343,6 +343,7 @@ def save_user_to_database(root_element):
             calendar_events.create_calendar(user_id)
         
         else:
+            logger.debug('in else')
             print("One or more required elements (id, first_name, last_name, email) are missing in the XML.")
     
     except Exception as e:
@@ -388,7 +389,7 @@ def callback(ch, method, properties, body):
     try:
         xml_content = body.decode('utf-8')
         is_valid, root_element = validate_xml(xml_content)
-        logger.debug('validate', xml_content)
+        logger.debug(xml_content)
         
         if is_valid:
             xml_type = root_element.tag
