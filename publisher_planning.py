@@ -90,7 +90,7 @@ def publish_user_xml(user_id):
          # Define all elements from the schema with empty values
         elements = [
             'routing_key', 'crud_operation', 'id', 'first_name', 'last_name', 'email',
-            'telephone', 'birthday', 'company_email', 'company_id', 'source',
+            'telephone', 'birthday', 'address', 'company_email', 'company_id', 'source',
             'user_role', 'invoice', 'calendar_link'
         ]
 
