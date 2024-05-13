@@ -277,8 +277,13 @@ def add_service_id(master_uuid, service, service_id):
         "Service": service,
         "ServiceId": service_id
     }
+
+    headers = {
+        "Content-Type": "application/json"  # Set content type to JSON
+    }
+
     try:
-        response = requests.post(url, data=json.dumps(payload))
+        response = requests.post(url, data=json.dumps(payload), headers=headers)
         response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
         
         if response.status_code in (200, 201):
