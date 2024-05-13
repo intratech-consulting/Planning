@@ -106,7 +106,7 @@ def publish_user_xml(user_id):
         # Set values for specific elements
         user_elem.find('id').text = str(user_id)
         user_elem.find('calendar_link').text = calendar_link or ''  # Use calendar_link or empty string
-        user_elem.find('crud_operation').text = 'create'  # Set the 'crud_operation' value to 'create'
+        user_elem.find('crud_operation').text = 'update'  # Set the 'crud_operation' value to 'create'
         user_elem.find('routing_key').text = 'user.planning'  # Set the 'routing_key' value to 'user.planning'
 
         # Create XML string
