@@ -6,6 +6,8 @@ import mysql.connector
 import calendar_events
 import logging
 import sys
+import requests
+import json
 
 # Create a custom logger
 logger = logging.getLogger(__name__)
@@ -268,6 +270,22 @@ XSD_SCHEMAS = {
     """,
 }
 
+def add_service_id(master_uuid, service, service_id):
+    url = f"http://{os.getenv('RABBITMQ_HOST')}:6000/addServiceId"
+    payload = {
+        "MasterUuid": master_uuid,
+        "Service": service,
+        "ServiceId": service_id
+    }
+    response = requests.post(url, data=json.dumps(payload))
+    if response.status_code == 200:
+        return response.json()
+    elif response.status_code == 201:
+        print(response.content)
+        return response.json()
+    else:
+        return None
+
 # Function to validate XML against embedded XSD schema
 def validate_xml(xml_str):
     try:
@@ -362,6 +380,7 @@ def save_user_to_database(root_element):
                 cursor.close()
                 conn.close()
 
+                add_service_id(user_id, 'planning', user_id)
                 calendar_events.create_calendar(user_id)
             else:
                 logger.error("Database connection failed. Unable to save user data.")
