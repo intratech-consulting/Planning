@@ -57,7 +57,7 @@ def create_tables():
         """,
         """
         CREATE TABLE IF NOT EXISTS User (
-            UserId INT AUTO_INCREMENT PRIMARY KEY,
+            UserId VARCHAR(255) PRIMARY KEY,
             First_name VARCHAR(50),
             Last_name VARCHAR(50),
             Email VARCHAR(100),
