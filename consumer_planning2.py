@@ -277,13 +277,18 @@ def add_service_id(master_uuid, service, service_id):
         "Service": service,
         "ServiceId": service_id
     }
-    response = requests.post(url, data=json.dumps(payload))
-    if response.status_code == 200:
-        return response.json()
-    elif response.status_code == 201:
-        print(response.content)
-        return response.json()
-    else:
+    try:
+        response = requests.post(url, data=json.dumps(payload))
+        response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+        
+        if response.status_code in (200, 201):
+            return response.json()
+        else:
+            logger.error(f"Unexpected response: {response.status_code} - {response.text}")
+            return None
+            
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error during request: {e}")
         return None
 
 # Function to validate XML against embedded XSD schema
