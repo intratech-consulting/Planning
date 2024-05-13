@@ -21,7 +21,7 @@ def fetch_user_data(user_id):
 
     # Fetch user data based on user_id
     query = "SELECT UserId, CalendarLink FROM User WHERE UserId = %s"
-    cursor.execute(query, (int(user_id),))
+    cursor.execute(query, (user_id))
     user_data = cursor.fetchone()
 
     # Close cursor and connection
