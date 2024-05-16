@@ -52,6 +52,7 @@ DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_DATABASE = os.getenv("DB_DATABASE")
+DB_PORT = os.getenv('DB_PORT', 3306),
 
 def connect_to_mysql():
     try:
@@ -59,6 +60,7 @@ def connect_to_mysql():
         connection = mysql.connector.connect(
             host=DB_HOST,
             user=DB_USER,
+            port = DB_PORT,
             password=DB_PASSWORD,
             database=DB_DATABASE
         )
