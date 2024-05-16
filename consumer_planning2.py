@@ -345,61 +345,87 @@ def get_database_connection():
 # Function to save user data to the database
 def save_user_to_database(root_element):
     try:
-        logger.debug(f'{root_element} user database')
+        crud_operation = root_element.find('crud_operation').text
         id_elem = root_element.find('id')
-        logger.debug(f'{root_element} id')
-        first_name_elem = root_element.find('first_name')
-        logger.debug(f'{root_element} fn')
-        last_name_elem = root_element.find('last_name')
-        logger.debug(f'{root_element} last_name')
-        email_elem = root_element.find('email')
-        logger.debug(f'{root_element} email')
-        company_id_elem = root_element.find('company_id')
         
-        if id_elem is not None and first_name_elem is not None \
-           and last_name_elem is not None and email_elem is not None:
-            logger.debug('in if')
-            # Extract text values from XML elements
+        if crud_operation not in ['create', 'update', 'delete']:
+            logger.error(f"Invalid CRUD operation: {crud_operation}")
+            return
+        
+        if crud_operation == 'delete':
+            if id_elem is None:
+                logger.error("User ID not provided for delete operation.")
+                return
+            
+            user_id = id_elem.text
+            conn = get_database_connection()
+            
+            if conn is not None:
+                cursor = conn.cursor()
+                sql = "DELETE FROM User WHERE UserId = %s"
+                cursor.execute(sql, (user_id,))
+                conn.commit()
+                cursor.close()
+                conn.close()
+                logger.info(f"User data with ID '{user_id}' deleted successfully.")
+            else:
+                logger.error("Database connection failed. Unable to delete user data.")
+        
+        else:  # For create and update operations
+            if id_elem is None:
+                logger.error("User ID not provided for create/update operation.")
+                return
+                
+            first_name_elem = root_element.find('first_name')
+            last_name_elem = root_element.find('last_name')
+            email_elem = root_element.find('email')
+            company_id_elem = root_element.find('company_id')
+
+            if first_name_elem is None or last_name_elem is None or email_elem is None:
+                logger.error("One or more required elements (first_name, last_name, email) are missing in the XML.")
+                return
+
             user_id = id_elem.text
             first_name = first_name_elem.text
             last_name = last_name_elem.text
             email = email_elem.text
-            
-            # Check if company_id is available
+
             if company_id_elem is not None:
                 company_id = company_id_elem.text
             else:
-                company_id = None  # Set company_id to None if not provided
-            
-            # Get database connection
+                company_id = None
+
             conn = get_database_connection()
-            
-            if conn is not None:  # Ensure connection is established successfully
+
+            if conn is not None:
                 cursor = conn.cursor()
 
-                # Prepare SQL query and values
-                sql = "INSERT INTO User (UserId, First_name, Last_name, Email, CompanyId) VALUES (%s, %s, %s, %s, %s)"
-                values = (user_id, first_name, last_name, email, company_id)
-                
-                # Execute SQL query
-                cursor.execute(sql, values)
-                conn.commit()
-                
-                print("User data saved to the database successfully.")
-                
+                if crud_operation == 'create':
+                    sql = "INSERT INTO User (UserId, First_name, Last_name, Email, CompanyId) VALUES (%s, %s, %s, %s, %s)"
+                    values = (user_id, first_name, last_name, email, company_id)
+                    cursor.execute(sql, values)
+                    conn.commit()
+                    logger.info("User data saved to the database successfully.")
+                elif crud_operation == 'update':
+                    sql = "UPDATE User SET First_name = %s, Last_name = %s, Email = %s, CompanyId = %s WHERE UserId = %s"
+                    values = (first_name, last_name, email, company_id, user_id)
+                    cursor.execute(sql, values)
+                    conn.commit()
+                    logger.info(f"User data with ID '{user_id}' updated successfully.")
+
                 cursor.close()
                 conn.close()
 
-                add_service_id(user_id, 'planning', user_id)
-                calendar_events.create_calendar(user_id)
+                # Add service ID and create calendar event for new users
+                if crud_operation == 'create':
+                    add_service_id(user_id, 'planning', user_id)
+                    calendar_events.create_calendar(user_id)
+
             else:
                 logger.error("Database connection failed. Unable to save user data.")
-        else:
-            logger.debug('One or more required elements (id, first_name, last_name, email) are missing in the XML.')
 
     except Exception as e:
         logger.error(f"Error saving user data to database: {str(e)}")
-
 
 # Function to save company data to the database
 def save_company_to_database(root_element):
