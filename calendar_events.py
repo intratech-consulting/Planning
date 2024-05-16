@@ -47,27 +47,21 @@ SERVICE_ACCOUNT_EMAIL = os.getenv("SERVICE_ACCOUNT_EMAIL")
 # If modifying these scopes, specify the required scopes for accessing Google Calendar.
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
-# MySQL Database Connection
-DB_HOST = os.getenv("DB_HOST")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_DATABASE = os.getenv("DB_DATABASE")
-DB_PORT = os.getenv('DB_PORT', 3306),
 
 def connect_to_mysql():
     try:
         # Connect to MySQL
         connection = mysql.connector.connect(
-            host=DB_HOST,
-            user=DB_USER,
-            port = DB_PORT,
-            password=DB_PASSWORD,
-            database=DB_DATABASE
+            host=os.getenv('DB_HOST'),
+            port=os.getenv('DB_PORT', 3306),
+            user=os.getenv('DB_USER'),
+            password=os.getenv('DB_PASSWORD'),
+            database=os.getenv('DB_DATABASE')
         )
         print("Connected to MySQL database")
         return connection
     except mysql.connector.Error as e:
-        print("Error connecting to MySQL:", e)
+        print("Error connecting from calendar.py to MySQL:", e)
         return None
 
 def create_calendar(user_id):
