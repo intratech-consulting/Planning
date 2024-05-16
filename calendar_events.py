@@ -231,9 +231,9 @@ def add_event_to_calendar(user_id, event_id):
     mysql_connection.close()
 
 
-if __name__ == '__main__':
- user_id_from_rabbitmq = 'dab9414f-5530-4ddc-920a-1fd74a31c415' # Hardcoded, make it a comment when we use function calls
-  #  event_id = 7  # Hardcoded, make it a comment when we use function calls
-create_calendar(user_id_from_rabbitmq)
-    #add_event_to_calendar(user_id_from_rabbitmq, event_id)
+#if __name__ == '__main__':
+ #user_id_from_rabbitmq = 'dab9414f-5530-4ddc-920a-1fd74a31c415' # Hardcoded, make it a comment when we use function calls
+    #  event_id = 7  # Hardcoded, make it a comment when we use function calls
+    #create_calendar(user_id_from_rabbitmq)
+        #add_event_to_calendar(user_id_from_rabbitmq, event_id)
     
