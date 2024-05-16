@@ -404,7 +404,6 @@ def save_user_to_database(root_element):
                     sql = "INSERT INTO User (UserId, First_name, Last_name, Email, CompanyId) VALUES (%s, %s, %s, %s, %s)"
                     values = (user_id, first_name, last_name, email, company_id)
                     cursor.execute(sql, values)
-                    calendar_events.create_calendar(user_id)
                     conn.commit()
                     logger.info("User data saved to the database successfully.")
                 elif crud_operation == 'update':
@@ -415,7 +414,12 @@ def save_user_to_database(root_element):
                     logger.info(f"User data with ID '{user_id}' updated successfully.")
 
                 cursor.close()
-                conn.close()   
+                conn.close()
+
+                # Add service ID and create calendar event for new users
+                if crud_operation == 'create':
+                    add_service_id(user_id, 'planning', user_id)
+                    calendar_events.create_calendar(user_id)
 
             else:
                 logger.error("Database connection failed. Unable to save user data.")
