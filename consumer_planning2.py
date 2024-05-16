@@ -418,6 +418,7 @@ def save_user_to_database(root_element):
 
                 # Add service ID and create calendar event for new users
                 if crud_operation == 'create':
+                    logger.info("TestTest")
                     add_service_id(user_id, 'planning', user_id)
                     calendar_events.create_calendar(user_id)
 
