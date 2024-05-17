@@ -44,7 +44,7 @@ def fetch_event_data(event_id):
 
     # Fetch event data based on event_id
     query = """
-        SELECT Id, Start_datetime, End_datetime, Location, Description, Max_Registrations, Available_Seats
+        SELECT Id, Summary, Start_datetime, End_datetime, Location, Description, Max_Registrations, Available_Seats
         FROM Events
         WHERE Id = %s
     """
@@ -125,7 +125,7 @@ def publish_event_xml(event_id):
     event_data = fetch_event_data(event_id)
 
     if event_data:
-        (id, start_datetime, end_datetime, location, description, max_registrations, available_seats) = event_data
+        (id, title, start_datetime, end_datetime, location, description, max_registrations, available_seats) = event_data
 
         # Extract date and time components
         event_date = start_datetime.date()
@@ -140,6 +140,7 @@ def publish_event_xml(event_id):
             ('routing_key', 'event.planning'),
             ('crud_operation', 'create'),
             ('id', str(id)),
+            ('title', str(title))
             ('date', str(event_date)),
             ('start_time', str(start_time)),
             ('end_time', str(end_time)),
