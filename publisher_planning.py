@@ -153,8 +153,8 @@ def publish_event_xml(event_id):
 
         # Add speaker element with sub-elements between location and max_registrations
         speaker_elem = ET.SubElement(event_elem, 'speaker')
-        ET.SubElement(speaker_elem, 'user_id')
-        ET.SubElement(speaker_elem, 'company_id')
+        ET.SubElement(speaker_elem, 'user_id').text = ''
+        ET.SubElement(speaker_elem, 'company_id').text = ''
 
         # Add max_registrations and available_seats elements
         ET.SubElement(event_elem, 'max_registrations').text = str(max_registrations)
