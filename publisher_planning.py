@@ -140,7 +140,7 @@ def publish_event_xml(event_id):
             ('routing_key', 'event.planning'),
             ('crud_operation', 'create'),
             ('id', str(id)),
-            ('title', str(title))
+            ('title', str(title)),
             ('date', str(event_date)),
             ('start_time', str(start_time)),
             ('end_time', str(end_time)),
