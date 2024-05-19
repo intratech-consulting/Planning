@@ -127,14 +127,14 @@ def publish_user_xml(user_id):
         ]
 
         for elem_name in elements:
-            ET.SubElement(user_elem, elem_name)
+            ET.SubElement(user_elem, elem_name).text = ''
 
         # Add address element
-        address_elem = ET.SubElement(user_elem, 'address')
+        address_elem = user_elem.find('address')
         address_sub_elements = ['country', 'state', 'city', 'zip', 'street', 'house_number']
         for sub_elem_name in address_sub_elements:
-            ET.SubElement(address_elem, sub_elem_name)
-
+            ET.SubElement(address_elem, sub_elem_name).text = ''
+            
         # Set values for specific elements
         user_elem.find('id').text = str(user_id)
         user_elem.find('calendar_link').text = calendar_link or ''  # Use calendar_link or empty string
