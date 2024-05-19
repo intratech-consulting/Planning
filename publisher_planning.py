@@ -134,7 +134,7 @@ def publish_user_xml(user_id):
         address_sub_elements = ['country', 'state', 'city', 'zip', 'street', 'house_number']
         for sub_elem_name in address_sub_elements:
             ET.SubElement(address_elem, sub_elem_name).text = ''
-            
+
         # Set values for specific elements
         user_elem.find('id').text = str(user_id)
         user_elem.find('calendar_link').text = calendar_link or ''  # Use calendar_link or empty string
@@ -203,7 +203,7 @@ def publish_event_xml(event_id):
         print(f"Event with event_id '{event_id}' not found in the database.")
 
 
-# Example usage
-#if __name__ == '__main__':
- #   event_id_to_publish = '1'  # Provide the user_id for which you want to publish the XML
-  #  publish_event_xml(event_id_to_publish)
+ #Example usage
+if __name__ == '__main__':
+    event_id_to_publish = '10'  # Provide the user_id for which you want to publish the XML
+    publish_event_xml(event_id_to_publish)
