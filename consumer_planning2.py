@@ -358,7 +358,7 @@ def get_database_connection():
         return None  # Return None if connection fails (handle this appropriately in the caller)
 
 # Function to save user data to the database
-async def save_user_to_database(root_element):
+def save_user_to_database(root_element):
     try:
         crud_operation = root_element.find('crud_operation').text
         id_elem = root_element.find('id')
@@ -424,7 +424,7 @@ async def save_user_to_database(root_element):
                     logger.info("User data saved to the database successfully.")
                 elif crud_operation == 'update':
                     select_user = "SELECT First_name, Last_name, Email, CompanyId FROM User WHERE UserId = %s"
-                    await cursor.execute(select_user, (user_id,))
+                    cursor.execute(select_user, (user_id,))
                     current_data = cursor.fetchone()
                     if current_data is None:
                         logger.error(f"User with ID '{user_id}' not found.")
