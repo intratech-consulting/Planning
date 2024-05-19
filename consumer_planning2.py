@@ -270,6 +270,10 @@ XSD_SCHEMAS = {
     """,
 }
 
+headers = {
+        "Content-Type": "application/json"  # Set content type to JSON
+    }
+
 def add_service_id(master_uuid, service, service_id):
     url = f"http://{os.getenv('RABBITMQ_HOST')}:6000/addServiceId"
     payload = {
@@ -278,9 +282,7 @@ def add_service_id(master_uuid, service, service_id):
         "ServiceId": service_id
     }
 
-    headers = {
-        "Content-Type": "application/json"  # Set content type to JSON
-    }
+   
 
     try:
         response = requests.post(url, data=json.dumps(payload), headers=headers)
@@ -296,6 +298,19 @@ def add_service_id(master_uuid, service, service_id):
         logger.error(f"Error during request: {e}")
         return None
 
+def delete_service_id(master_uuid, service):
+    url = f"http://{os.getenv('RABBITMQ_HOST')}:6000/updateServiceId"
+    payload = {
+        "MASTERUUID": master_uuid,
+        "NewServiceId": None,
+        "Service": service
+    }
+    response = requests.post(url, headers=headers, data=json.dumps(payload))
+    if response.status_code == 200:
+        return response.json()
+    else:
+        return None
+    
 # Function to validate XML against embedded XSD schema
 def validate_xml(xml_str):
     try:
@@ -368,6 +383,7 @@ def save_user_to_database(root_element):
                 cursor.close()
                 conn.close()
                 logger.info(f"User data with ID '{user_id}' deleted successfully.")
+                delete_service_id(user_id,'planning')
             else:
                 logger.error("Database connection failed. Unable to delete user data.")
         
@@ -407,11 +423,27 @@ def save_user_to_database(root_element):
                     conn.commit()
                     logger.info("User data saved to the database successfully.")
                 elif crud_operation == 'update':
-                    sql = "UPDATE User SET First_name = %s, Last_name = %s, Email = %s, CompanyId = %s WHERE UserId = %s"
-                    values = (first_name, last_name, email, company_id, user_id)
-                    cursor.execute(sql, values)
-                    conn.commit()
-                    logger.info(f"User data with ID '{user_id}' updated successfully.")
+                    select_user = "SELECT First_name, Last_name, Email, CompanyId FROM User WHERE UserId = %s"
+                    cursor.execute(select_user, (user_id,))
+                    current_data = cursor.fetchone()
+
+                    if current_data is None:
+                        logger.error(f"User with ID '{user_id}' not found.")
+                    else:
+                        current_first_name, current_last_name, current_email, current_company_id = current_data
+
+                # Use current data if no new data is provided
+                first_name = first_name if first_name is not None else current_first_name
+                last_name = last_name if last_name is not None else current_last_name
+                email = email if email is not None else current_email
+                company_id = company_id if company_id is not None else current_company_id
+
+                sql = "UPDATE User SET First_name = %s, Last_name = %s, Email = %s, CompanyId = %s WHERE UserId = %s"
+                values = (first_name, last_name, email, company_id, user_id)
+                cursor.execute(sql, values)
+                conn.commit()
+                logger.info(f"User data with ID '{user_id}' updated successfully.")
+
 
                 cursor.close()
                 conn.close()
