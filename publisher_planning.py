@@ -100,7 +100,7 @@ def publish_xml_message(exchange_name, routing_key, xml_str):
     channel.exchange_declare(exchange=exchange_name, exchange_type='topic', durable=True)
 
     # Publish the message
-    channel.basic_publish(exchange=exchange_name, routing_key=routing_key, body=xml_str)
+    channel.basic_publish(exchange=exchange_name, routing_key='event.planning', body=xml_str)
 
     # Close the connection
     connection.close()
@@ -197,7 +197,7 @@ def publish_event_xml(event_id):
         xml_str = xml_str.decode('utf-8')  # Convert bytes to string
 
         # Publish the event XML object to RabbitMQ
-        publish_xml_message('amq.topic', 'event.planning', xml_str)
+        publish_xml_message('amq.topic', '', xml_str)
 
     else:
         print(f"Event with event_id '{event_id}' not found in the database.")
