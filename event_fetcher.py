@@ -107,6 +107,7 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
                             # Check if the event exists in the MySQL table
                             cursor.execute(retrieve_event_id_query, (summary,))
                             event_id = cursor.fetchone()[0]
+                            logging.info("The retrieved event id:%s", event_id)
 
                             logging.info("Event inserted into MySQL table: %s", summary)
                             publisher_planning.publish_event_xml(event_id)
