@@ -3,6 +3,7 @@ import os
 import time
 import mysql.connector
 import logging
+import sys
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
