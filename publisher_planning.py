@@ -3,6 +3,37 @@ import mysql.connector
 import pika
 from dotenv import load_dotenv
 import os
+import logging
+
+# Create a custom logger
+logger = logging.getLogger(__name__)
+
+# Set the level of this logger.
+# DEBUG, INFO, WARNING, ERROR, CRITICAL can be used depending on the granularity of log you want.
+logger.setLevel(logging.DEBUG)
+
+# Create handlers
+c_handler = logging.StreamHandler()
+s_handler = logging.StreamHandler(sys.stdout)
+c_handler.setLevel(logging.DEBUG)
+s_handler.setLevel(logging.DEBUG)  # Set level to DEBUG
+
+# Create formatters and add it to handlers
+c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+s_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+c_handler.setFormatter(c_format)
+s_handler.setFormatter(s_format)
+
+# Add handlers to the logger
+logger.addHandler(c_handler)
+logger.addHandler(s_handler)
+
+logger.debug('This is a debug message')
+logger.info('This is an info message')
+
+logger.warning('This is a warning')
+logger.error('This is an error')
+
 
 # Load environment variables from .env file
 load_dotenv()
@@ -73,7 +104,7 @@ def publish_xml_message(exchange_name, routing_key, xml_str):
     # Close the connection
     connection.close()
         
-    print(f"XML message published to RabbitMQ with routing key '{routing_key}'")
+    logger.info(f"XML message published to RabbitMQ with routing key '{routing_key}'")
 
 
 # Function to publish XML user-object to RabbitMQ
