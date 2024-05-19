@@ -4,6 +4,7 @@ import pika
 from dotenv import load_dotenv
 import os
 import logging
+import sys
 
 # Create a custom logger
 logger = logging.getLogger(__name__)
