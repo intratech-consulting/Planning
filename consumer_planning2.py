@@ -430,12 +430,12 @@ async def save_user_to_database(root_element):
                         logger.error(f"User with ID '{user_id}' not found.")
                     else:
                         current_first_name, current_last_name, current_email, current_company_id = current_data
-
-                # Use current data if no new data is provided
-                first_name = first_name if first_name is not None else current_first_name
-                last_name = last_name if last_name is not None else current_last_name
-                email = email if email is not None else current_email
-                company_id = company_id if company_id is not None else current_company_id
+                        
+                        # Use current data if no new data is provided
+                        first_name = first_name if first_name is not None else current_first_name
+                        last_name = last_name if last_name is not None else current_last_name
+                        email = email if email is not None else current_email
+                        company_id = company_id if company_id is not None else current_company_id
 
                 sql = "UPDATE User SET First_name = %s, Last_name = %s, Email = %s, CompanyId = %s WHERE UserId = %s"
                 values = (first_name, last_name, email, company_id, user_id)
