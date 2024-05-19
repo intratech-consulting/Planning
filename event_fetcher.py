@@ -3,6 +3,7 @@ import os
 import time
 import mysql.connector
 import logging
+import publisher_planning
 import sys
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
@@ -101,7 +102,14 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
                         if event_count == 0:
                             # Insert event into MySQL table if it doesn't exist
                             cursor.execute(insert_query, (summary, start, end, location, description, max_registrations, available_seats))
+
+                            retrieve_event_id_query = "SELECT event_id FROM events WHERE summary = %s"
+                            # Check if the event exists in the MySQL table
+                            cursor.execute("SELECT COUNT(*) FROM events WHERE summary = %s", (summary,))
+                            event_id = cursor.fetchone()[0]
+
                             logging.info("Event inserted into MySQL table: %s", summary)
+                            publisher_planning.publish_event_xml(event_id)
                         else:
                             logging.info("Event already exists in MySQL table. Skipping insertion: %s", summary)
 

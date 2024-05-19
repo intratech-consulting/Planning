@@ -223,7 +223,6 @@ def add_event_to_calendar(user_id, event_id):
         # Insert event into Google Calendar
         created_event = service.events().insert(calendarId=calendar_id, body=event_body).execute()
         print('Event added to Google Calendar:', created_event['id'])
-        publisher_planning.publish_event_xml(event_id)
     else:
         print("Event with id", event_id, "not found in the database.")
 
