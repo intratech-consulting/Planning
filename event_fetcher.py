@@ -103,9 +103,9 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
                             # Insert event into MySQL table if it doesn't exist
                             cursor.execute(insert_query, (summary, start, end, location, description, max_registrations, available_seats))
 
-                            retrieve_event_id_query = "SELECT event_id FROM events WHERE summary = %s"
+                            retrieve_event_id_query = "SELECT event_id FROM Events WHERE summary = %s"
                             # Check if the event exists in the MySQL table
-                            cursor.execute("SELECT COUNT(*) FROM events WHERE summary = %s", (summary,))
+                            cursor.execute(retrieve_event_id_query, (summary,))
                             event_id = cursor.fetchone()[0]
 
                             logging.info("Event inserted into MySQL table: %s", summary)
