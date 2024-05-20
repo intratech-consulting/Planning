@@ -8,6 +8,7 @@ import sys
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
+import aiomysql
 
 # Create a custom logger
 logger = logging.getLogger(__name__)
@@ -51,10 +52,10 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_DATABASE = os.getenv("DB_DATABASE")
 
 
-def connect_to_mysql():
+async def connect_to_mysql():
     try:
         # Connect to MySQL
-        connection = mysql.connector.connect(
+        connection = await aiomysql.connect(
             host=DB_HOST,
             user=DB_USER,
             password=DB_PASSWORD,
@@ -106,7 +107,7 @@ async def fetch_events(calendar_service, start_date, end_date, mysql_connection,
                             retrieve_event_id_query = "SELECT Id FROM Events WHERE summary = %s"
                             # Check if the event exists in the MySQL table
                             await cursor.execute(retrieve_event_id_query, (summary,))
-                            event_id = cursor.fetchone()[0]
+                            event_id = await cursor.fetchone()[0]
                             logging.info("The retrieved event id:%s", event_id)
 
                             logging.info("Event inserted into MySQL table: %s", summary)
