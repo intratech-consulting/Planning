@@ -8,7 +8,7 @@ import sys
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
-import aiomysql
+
 
 # Create a custom logger
 logger = logging.getLogger(__name__)
@@ -45,10 +45,10 @@ SCOPES = ['https://www.googleapis.com/auth/calendar']
 # Load environment variables from .env file
 load_dotenv()
 
-async def connect_to_mysql():
+def connect_to_mysql():
     try:
         # Connect to MySQL
-        connection = await aiomysql.connect(
+        connection = mysql.connector.connect(
             host=os.getenv('DB_HOST'),
             port=os.getenv('DB_PORT', 3306),
             user=os.getenv('DB_USER'),
@@ -61,7 +61,7 @@ async def connect_to_mysql():
         logging.error("Error connecting to MySQL: %s", e)
         return None
 
-async def fetch_events(calendar_service, start_date, end_date, mysql_connection, interval_seconds=3):
+def fetch_events(calendar_service, start_date, end_date, mysql_connection, interval_seconds=3):
     try:
         while True:
             # Fetch events from Google Calendar
@@ -100,8 +100,8 @@ async def fetch_events(calendar_service, start_date, end_date, mysql_connection,
 
                             retrieve_event_id_query = "SELECT Id FROM Events WHERE summary = %s"
                             # Check if the event exists in the MySQL table
-                            await cursor.execute(retrieve_event_id_query, (summary,))
-                            event_id = await cursor.fetchone()[0]
+                            cursor.execute(retrieve_event_id_query, (summary,))
+                            event_id = cursor.fetchone()[0]
                             logging.info("The retrieved event id:%s", event_id)
 
                             logging.info("Event inserted into MySQL table: %s", summary)
