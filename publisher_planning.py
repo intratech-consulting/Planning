@@ -155,6 +155,7 @@ def publish_user_xml(user_id):
 
 # Function to publish XML event object to RabbitMQ
 def publish_event_xml(event_id):
+    logging.info("Entered Publisher")
     # Fetch event data from MySQL database
     event_data = fetch_event_data(event_id)
 
