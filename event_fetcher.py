@@ -66,7 +66,7 @@ def connect_to_mysql():
         logging.error("Error connecting to MySQL: %s", e)
         return None
 
-def fetch_events(calendar_service, start_date, end_date, mysql_connection, interval_seconds=3):
+async def fetch_events(calendar_service, start_date, end_date, mysql_connection, interval_seconds=3):
     try:
         while True:
             # Fetch events from Google Calendar
@@ -93,7 +93,7 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
                         location = location_parts[0].strip() if len(location_parts) >= 1 else 'N/A'  # Extract location
                         max_registrations = int(location_parts[1]) if len(location_parts) >= 2 else 0  # Extract max_registrations
                         description = event.get('description', 'N/A')
-                        available_seats = 50
+                        available_seats = max_registrations
                         # Check if event already exists in the database
                         event_exists_query = "SELECT COUNT(*) FROM Events WHERE summary = %s AND start_datetime = %s AND end_datetime = %s"
                         cursor.execute(event_exists_query, (summary, start, end))
@@ -105,7 +105,7 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
 
                             retrieve_event_id_query = "SELECT Id FROM Events WHERE summary = %s"
                             # Check if the event exists in the MySQL table
-                            cursor.execute(retrieve_event_id_query, (summary,))
+                            await cursor.execute(retrieve_event_id_query, (summary,))
                             event_id = cursor.fetchone()[0]
                             logging.info("The retrieved event id:%s", event_id)
 
