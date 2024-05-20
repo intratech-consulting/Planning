@@ -55,10 +55,10 @@ def connect_to_mysql():
             password=os.getenv('DB_PASSWORD'),
             database=os.getenv('DB_DATABASE')
         )
-        logging.info("Connected to MySQL database")
+        logger.info("Connected to MySQL database")
         return connection
     except mysql.connector.Error as e:
-        logging.error("Error connecting to MySQL: %s", e)
+        logger.error("Error connecting to MySQL: %s", e)
         return None
 
 def fetch_events(calendar_service, start_date, end_date, mysql_connection, interval_seconds=3):
@@ -105,27 +105,27 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
                             if result:
                                 event_id = int(result[0])
                                 
-                                logging.info("Event inserted into MySQL table: %s", summary)
+                                logger.info("Event inserted into MySQL table: %s", summary)
                                 publisher_planning.publish_event_xml(event_id)
                             else:
-                                logging.error("Failed to retrieve event ID for inserted event: %s", summary)
+                                logger.error("Failed to retrieve event ID for inserted event: %s", summary)
                         else:
-                            logging.info("Event already exists in MySQL table. Skipping insertion: %s", summary)
+                            logger.info("Event already exists in MySQL table. Skipping insertion: %s", summary)
 
                     mysql_connection.commit()
-                    logging.info("Events inserted into MySQL table")
+                    logger.info("Events inserted into MySQL table")
                 except mysql.connector.Error as e:
-                    logging.error("Error inserting events into MySQL table: %s", e)
+                    logger.error("Error inserting events into MySQL table: %s", e)
                     mysql_connection.rollback()
                 finally:
                     cursor.close()
             else:
-                logging.info("No events found in the calendar within the specified time range.")
+                logger.info("No events found in the calendar within the specified time range.")
 
             time.sleep(interval_seconds)  # Sleep for specified interval before checking again
 
     except Exception as e:
-        logging.error("An error occurred: %s", e)
+        logger.error("An error occurred: %s", e)
 
 if __name__ == "__main__":
     # Set start date to today and end date to 3 weeks after
