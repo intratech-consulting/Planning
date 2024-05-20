@@ -103,7 +103,9 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
                             cursor.execute(retrieve_event_id_query, (summary,))
                             result = cursor.fetchone()
                             if result:
-                                event_id = int(result[0])
+                                Elem_event_id = result.find('id')
+                                event_id = Elem_event_id.text
+
                                 logging.info("Event inserted into MySQL table: %s", summary)
                                 publisher_planning.publish_event_xml(event_id)
                             else:
