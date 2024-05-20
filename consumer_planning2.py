@@ -358,7 +358,7 @@ def get_database_connection():
         return None  # Return None if connection fails (handle this appropriately in the caller)
 
 # Function to save user data to the database
-async def save_user_to_database(root_element):
+def save_user_to_database(root_element):
     try:
         crud_operation = root_element.find('crud_operation').text
         id_elem = root_element.find('id')
@@ -419,18 +419,18 @@ async def save_user_to_database(root_element):
                 if crud_operation == 'create':
                     sql = "INSERT INTO User (UserId, First_name, Last_name, Email, CompanyId) VALUES (%s, %s, %s, %s, %s)"
                     values = (user_id, first_name, last_name, email, company_id)
-                    await cursor.execute(sql, values)
+                    cursor.execute(sql, values)
                     conn.commit()
                     logger.info("User data saved to the database successfully.")
                 elif crud_operation == 'update':
                     select_user = "SELECT First_name, Last_name, Email, CompanyId FROM User WHERE UserId = %s"
-                    await cursor.execute(select_user, (user_id,))
+                    cursor.execute(select_user, (user_id,))
                     current_data = cursor.fetchone()
                     if current_data is None:
                         logger.error(f"User with ID '{user_id}' not found.")
                     else:
                         current_first_name, current_last_name, current_email, current_company_id = current_data
-                        
+
                         # Use current data if no new data is provided
                         first_name = first_name if first_name is not None else current_first_name
                         last_name = last_name if last_name is not None else current_last_name
@@ -439,7 +439,7 @@ async def save_user_to_database(root_element):
 
                 sql = "UPDATE User SET First_name = %s, Last_name = %s, Email = %s, CompanyId = %s WHERE UserId = %s"
                 values = (first_name, last_name, email, company_id, user_id)
-                await cursor.execute(sql, values)
+                cursor.execute(sql, values)
                 conn.commit()
                 logger.info(f"User data with ID '{user_id}' updated successfully.")
 
