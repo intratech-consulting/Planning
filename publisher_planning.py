@@ -83,7 +83,7 @@ def fetch_event_data(event_id):
         FROM Events
         WHERE Id = %s
     """
-    cursor.execute(query, event_id)
+    cursor.execute(query, (int(event_id),))
     event_data = cursor.fetchone()
 
     # Close cursor and connection
