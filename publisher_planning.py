@@ -1,3 +1,4 @@
+import re
 import xml.etree.ElementTree as ET
 import mysql.connector
 import pika
@@ -148,7 +149,7 @@ def publish_user_xml(user_id):
         xml_str = xml_str.decode('utf-8')  # Convert bytes to string
 
         # Ensure all empty elements are represented with explicit opening and closing tags
-        xml_str = xml_str.replace('<', '</').replace(' />', '>')
+        xml_str = re.sub(r'<(\w+)\s*/>', r'<\1></\1>', xml_str)
 
         publish_xml_message('amq.topic', 'user.planning', xml_str)
         
