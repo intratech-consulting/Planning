@@ -145,6 +145,9 @@ def publish_user_xml(user_id):
         xml_str = ET.tostring(user_elem, encoding='utf-8', method='xml')
         xml_str = xml_str.decode('utf-8')  # Convert bytes to string
 
+        # Ensure all empty elements are represented with explicit opening and closing tags
+        xml_str = xml_str.replace('<', '</').replace(' />', '>')
+
         publish_xml_message('amq.topic', 'user.planning', xml_str)
         
         print(f"XML message published to RabbitMQ for user_id: {user_id}")
