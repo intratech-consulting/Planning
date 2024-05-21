@@ -1,4 +1,5 @@
 import re
+import time
 import xml.etree.ElementTree as ET
 import mysql.connector
 import pika
@@ -160,6 +161,8 @@ def publish_user_xml(user_id):
 # Function to publish XML event object to RabbitMQ
 def publish_event_xml(event_id):
     logging.info("Entered Publisher")
+
+    time.sleep(5) # Sleep for 5 seconds to make sure the event is inserted into the database
     # Fetch event data from MySQL database
     event_data = fetch_event_data(event_id)
 
