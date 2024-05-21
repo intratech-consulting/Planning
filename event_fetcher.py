@@ -110,8 +110,8 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
                                 publisher_planning.publish_event_xml(event_id)
                             else:
                                 logger.error("Failed to retrieve event ID for inserted event: %s", summary)
-                        else:
-                            logger.info("Event already exists in MySQL table. Skipping insertion: %s", summary)
+                        #else:
+                            # logger.info("Event already exists in MySQL table. Skipping insertion: %s", summary)
 
                     mysql_connection.commit()
                     logger.info("Events inserted into MySQL table")
