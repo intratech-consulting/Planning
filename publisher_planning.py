@@ -83,7 +83,7 @@ def fetch_event_data(event_id):
     query = """
         SELECT Id, Summary, Start_datetime, End_datetime, Location, Description, Max_Registrations, Available_Seats
         FROM Events
-        WHERE Id = %s
+        WHERE id = %s
     """
     cursor.execute(query, (int(event_id),))
     event_data = cursor.fetchone()
