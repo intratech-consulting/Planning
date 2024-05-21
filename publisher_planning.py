@@ -163,7 +163,7 @@ def publish_user_xml(user_id):
 def publish_event_xml(results):
     logger.info("Entered Publisher")
 
-    time.sleep(5) # Sleep for 5 seconds to make sure the event is inserted into the database
+    time.sleep(10) # Sleep for 5 seconds to make sure the event is inserted into the database
     # Fetch event data from MySQL database
     # event_data = fetch_event_data(event_id)
 
@@ -207,11 +207,14 @@ def publish_event_xml(results):
         xml_str = ET.tostring(event_elem, encoding='utf-8', method='xml')
         xml_str = xml_str.decode('utf-8')  # Convert bytes to string
 
+        # Ensure all empty elements are represented with explicit opening and closing tags
+        xml_str = re.sub(r'<(\w+)\s*/>', r'<\1></\1>', xml_str)
+
         # Publish the event XML object to RabbitMQ
         publish_xml_message('amq.topic', 'event.planning', xml_str)
 
     else:
-        print(f"Event with event_id '{event_id}' not found in the database.")
+        print(f"Event with event_id '{id}' not found in the database.")
 
 
 def sendLogsToMonitoring(functionName, logMessage, isError):
