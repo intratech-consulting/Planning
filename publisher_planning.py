@@ -85,7 +85,7 @@ def fetch_event_data(event_id):
         FROM Events
         WHERE Id = %s
     """
-    cursor.execute(query, event_id)
+    cursor.execute(query, (int(event_id),))
     event_data = cursor.fetchone()
 
     # Close cursor and connection
@@ -220,7 +220,7 @@ def sendLogsToMonitoring(functionName, logMessage, isError):
 
     # Define elements with provided values
     elements = [
-        ('SystemName', 'Planning'),
+        ('SystemName', 'ExampleSystem'),
         ('FunctionName', str(functionName)),
         ('Logs', str(logMessage)),
         ('Error', 'true' if isError else 'false'),
