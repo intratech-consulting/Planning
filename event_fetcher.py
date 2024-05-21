@@ -98,16 +98,15 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
                             # Insert event into MySQL table if it doesn't exist
                             cursor.execute(insert_query, (summary, start, end, location, description, max_registrations, available_seats))
 
-                            retrieve_event_id_query = "SELECT Id FROM Events WHERE summary = %s"
+                            retrieve_event_id_query = "SELECT Id, Summary, Start_datetime, End_datetime, Location, Description, Max_Registrations, Available_Seats FROM Events WHERE summary = %s"
                             # Check if the event exists in the MySQL table
                             cursor.execute(retrieve_event_id_query, (summary,))
                             result = cursor.fetchone()
                             if result:
-                                event_id = result[0]
                                 logs = "Event inserted into MySQL table: %s" % summary
                                 logger.info("Event inserted into MySQL table: %s", summary)
                                 publisher_planning.sendLogsToMonitoring("Create-Event", logs, False)
-                                publisher_planning.publish_event_xml(event_id)
+                                publisher_planning.publish_event_xml(result)
                             else:
                                 logger.error("Failed to retrieve event ID for inserted event: %s", summary)
                         #else:

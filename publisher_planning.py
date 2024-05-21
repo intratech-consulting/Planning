@@ -160,15 +160,15 @@ def publish_user_xml(user_id):
         print(f"User with user_id '{user_id}' not found in the database.")
 
 # Function to publish XML event object to RabbitMQ
-def publish_event_xml(event_id):
+def publish_event_xml(results):
     logger.info("Entered Publisher")
 
-    time.sleep(10) # Sleep for 5 seconds to make sure the event is inserted into the database
+    time.sleep(5) # Sleep for 5 seconds to make sure the event is inserted into the database
     # Fetch event data from MySQL database
-    event_data = fetch_event_data(event_id)
+    # event_data = fetch_event_data(event_id)
 
-    if event_data:
-        (id, title, start_datetime, end_datetime, location, description, max_registrations, available_seats) = event_data
+    if results:
+        (id, title, start_datetime, end_datetime, location, description, max_registrations, available_seats) = results
 
         # Extract date and time components
         event_date = start_datetime.date()
