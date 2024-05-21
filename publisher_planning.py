@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import os
 import logging
 import sys
+from datetime import datetime
 
 # Create a custom logger
 logger = logging.getLogger(__name__)
@@ -211,6 +212,30 @@ def publish_event_xml(event_id):
 
     else:
         print(f"Event with event_id '{event_id}' not found in the database.")
+
+
+def sendLogsToMonitoring(functionName, logMessage, isError):
+    # Construct XML document for LogEntry
+    log_elem = ET.Element('LogEntry')
+
+    # Define elements with provided values
+    elements = [
+        ('SystemName', 'ExampleSystem'),
+        ('FunctionName', str(functionName)),
+        ('Logs', str(logMessage)),
+        ('Error', 'true' if isError else 'false'),
+        ('Timestamp', datetime.now().isoformat()),  # Timestamp in ISO 8601 format
+    ]
+
+    for elem_name, elem_value in elements:
+        ET.SubElement(log_elem, elem_name).text = elem_value
+
+    # Create XML string
+    xml_str = ET.tostring(log_elem, encoding='utf-8', method='xml')
+    xml_str = xml_str.decode('utf-8')  # Convert bytes to string
+
+    # Publish Log XML object to RabbitMQ
+    publish_xml_message('amq.topic', 'logs', xml_str)
 
 
 # Example usage
