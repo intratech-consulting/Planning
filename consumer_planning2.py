@@ -462,23 +462,76 @@ def save_user_to_database(root_element):
 # Function to save company data to the database
 def save_company_to_database(root_element):
     try:
-        company_id = root_element.find('id').text
-        name = root_element.find('name').text
-        email = root_element.find('email').text
+        crud_operation = root_element.find('crud_operation').text
+        id_elem = root_element.find('id')
+
+        if crud_operation not in ['create', 'update', 'delete']:
+            logger.error(f"Invalid CRUD operation: {crud_operation}")
+            return
         
+        if id_elem is None:
+            logger.error("Company ID not provided.")
+            return
+        
+        company_id = id_elem.text
+
         conn = get_database_connection()
+        if conn is None:
+            logger.error("Database connection failed. Unable to perform the operation.")
+            return
+
         cursor = conn.cursor()
 
-        sql = "INSERT INTO Company (CompanyId, Name, Email) VALUES (%s, %s, %s)"
-        values = (company_id, name, email)
-        cursor.execute(sql, values)
+        if crud_operation == 'delete':
+            sql = "DELETE FROM Company WHERE CompanyId = %s"
+            cursor.execute(sql, (company_id,))
+            conn.commit()
+            logger.info(f"Company data with ID '{company_id}' deleted successfully.")
+        
+        else:  # For create and update operations
+            name_elem = root_element.find('name')
+            email_elem = root_element.find('email')
 
-        conn.commit()
+            if name_elem is None or email_elem is None:
+                logger.error("One or more required elements (name, email) are missing in the XML.")
+                return
+
+            name = name_elem.text
+            email = email_elem.text
+
+            if crud_operation == 'create':
+                sql = "INSERT INTO Company (CompanyId, Name, Email) VALUES (%s, %s, %s)"
+                values = (company_id, name, email)
+                cursor.execute(sql, values)
+                conn.commit()
+                logger.info("Company data saved to the database successfully.")
+            
+            elif crud_operation == 'update':
+                select_company = "SELECT Name, Email FROM Company WHERE CompanyId = %s"
+                cursor.execute(select_company, (company_id,))
+                current_data = cursor.fetchone()
+                
+                if current_data is None:
+                    logger.error(f"Company with ID '{company_id}' not found.")
+                else:
+                    current_name, current_email = current_data
+
+                    # Use current data if no new data is provided
+                    name = name if name is not None else current_name
+                    email = email if email is not None else current_email
+
+                    sql = "UPDATE Company SET Name = %s, Email = %s WHERE CompanyId = %s"
+                    values = (name, email, company_id)
+                    cursor.execute(sql, values)
+                    conn.commit()
+                    logger.info(f"Company data with ID '{company_id}' updated successfully.")
+
         cursor.close()
         conn.close()
-        print("Company data saved to the database successfully.")
+        
     except Exception as e:
-        print(f"Error saving company data to database: {str(e)}")
+        logger.error(f"Error saving company data to database: {str(e)}")
+
 
 #Function to extract attendance data and funtioncall to system
 def send_attendance_to_system(root_element):
