@@ -268,6 +268,120 @@ XSD_SCHEMAS = {
             </xs:element>
         </xs:schema>
     """,
+    'event':"""
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:element name="event">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="routing_key">
+                            <xs:simpleType>
+                                <xs:restriction base="xs:string">
+                                    <xs:minLength value="1"/>
+                                </xs:restriction>
+                            </xs:simpleType>
+                        </xs:element>
+                        <xs:element name="crud_operation">
+                            <xs:simpleType>
+                                <xs:restriction base="xs:string">
+                                    <xs:enumeration value="create"/>
+                                    <xs:enumeration value="update"/>
+                                    <xs:enumeration value="delete"/>
+                                </xs:restriction>
+                            </xs:simpleType>
+                        </xs:element>
+                        <xs:element name="id">
+                            <xs:simpleType>
+                                <xs:restriction base="xs:string">
+                                    <xs:minLength value="1"/>
+                                </xs:restriction>
+                            </xs:simpleType>
+                        </xs:element>
+                        <xs:element name="title" type="xs:string" nillable="true"/>
+                        <xs:element name="date">
+                            <xs:simpleType>
+                                <xs:union>
+                                    <xs:simpleType>
+                                        <xs:restriction base='xs:string'>
+                                            <xs:length value="0"/>
+                                        </xs:restriction>
+                                    </xs:simpleType>
+                                    <xs:simpleType>
+                                        <xs:restriction base='xs:date' />
+                                    </xs:simpleType>
+                                </xs:union>
+                            </xs:simpleType>
+                        </xs:element>
+                        <xs:element name="start_time">
+                            <xs:simpleType>
+                                <xs:union>
+                                    <xs:simpleType>
+                                        <xs:restriction base='xs:string'>
+                                            <xs:length value="0"/>
+                                        </xs:restriction>
+                                    </xs:simpleType>
+                                    <xs:simpleType>
+                                        <xs:restriction base='xs:time' />
+                                    </xs:simpleType>
+                                </xs:union>
+                            </xs:simpleType>
+                        </xs:element>
+                        <xs:element name="end_time">
+                            <xs:simpleType>
+                                <xs:union>
+                                    <xs:simpleType>
+                                        <xs:restriction base='xs:string'>
+                                            <xs:length value="0"/>
+                                        </xs:restriction>
+                                    </xs:simpleType>
+                                    <xs:simpleType>
+                                        <xs:restriction base='xs:time' />
+                                    </xs:simpleType>
+                                </xs:union>
+                            </xs:simpleType>
+                        </xs:element>
+                        <xs:element name="location" type="xs:string" nillable="true"/>
+                        <xs:element name="speaker">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="user_id" type="xs:string" nillable="true"/>
+                                    <xs:element name="company_id" type="xs:string" nillable="true"/>
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                        <xs:element name="max_registrations">
+                            <xs:simpleType>
+                                <xs:union>
+                                    <xs:simpleType>
+                                        <xs:restriction base='xs:string'>
+                                            <xs:length value="0"/>
+                                        </xs:restriction>
+                                    </xs:simpleType>
+                                    <xs:simpleType>
+                                        <xs:restriction base='xs:integer' />
+                                    </xs:simpleType>
+                                </xs:union>
+                            </xs:simpleType>
+                        </xs:element>
+                        <xs:element name="available_seats">
+                            <xs:simpleType>
+                                <xs:union>
+                                    <xs:simpleType>
+                                        <xs:restriction base='xs:string'>
+                                            <xs:length value="0"/>
+                                        </xs:restriction>
+                                    </xs:simpleType>
+                                    <xs:simpleType>
+                                        <xs:restriction base='xs:integer' />
+                                    </xs:simpleType>
+                                </xs:union>
+                            </xs:simpleType>
+                        </xs:element>
+                        <xs:element name="description" type="xs:string" nillable="true"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:schema>
+    """,
 }
 
 headers = {
