@@ -77,8 +77,9 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
             if events:
                 try:
                     cursor = mysql_connection.cursor()
-                    insert_query = "INSERT INTO Events (summary, start_datetime, end_datetime, location, description, max_registrations, available_seats) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+                    insert_query = "INSERT INTO Events (id, summary, start_datetime, end_datetime, location, description, max_registrations, available_seats) VALUES (%s, %s, %s, %s, %s, %s, %s)"
                     for event in events:
+                        id = 0 # function call crm create masteruuid
                         summary = event['summary']
                         start = event['start'].get('dateTime', event['start'].get('date'))
                         end = event['end'].get('dateTime', event['end'].get('date'))
@@ -96,8 +97,8 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
 
                         if event_count == 0:
                             # Insert event into MySQL table if it doesn't exist
-                            cursor.execute(insert_query, (summary, start, end, location, description, max_registrations, available_seats))
-
+                            cursor.execute(insert_query, (id, summary, start, end, location, description, max_registrations, available_seats))
+                            # function call add service id net zoals in consumer
                             retrieve_event_id_query = "SELECT Id, Summary, Start_datetime, End_datetime, Location, Description, Max_Registrations, Available_Seats FROM Events WHERE summary = %s"
                             # Check if the event exists in the MySQL table
                             cursor.execute(retrieve_event_id_query, (summary,))
