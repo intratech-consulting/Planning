@@ -1,3 +1,4 @@
+import json
 import re
 import time
 import xml.etree.ElementTree as ET
@@ -8,6 +9,8 @@ import os
 import logging
 import sys
 from datetime import datetime
+
+import requests
 
 # Create a custom logger
 logger = logging.getLogger(__name__)
@@ -41,6 +44,22 @@ logger.error('This is an error')
 
 # Load environment variables from .env file
 load_dotenv()
+
+headers = {
+    "Content-Type": "application/json"
+}
+
+def create_master_uuid(service_id, service_name):
+    url = f"http://{os.getenv('RABBITMQ_HOST')}:6000/createMasterUuid"
+    payload = {
+        "ServiceId": service_id,
+        "Service": service_name
+    }
+    response = requests.post(url, headers=headers, data=json.dumps(payload))
+    if response.status_code == 200 and response.json().get("success") or response.status_code == 201 and response.json().get("success"):
+        return response.json().get("MasterUuid")
+    else:
+        return None
 
 # Function to fetch user data from MySQL database based on user_id
 def fetch_user_data(user_id):
@@ -170,6 +189,8 @@ def publish_event_xml(results):
     if results:
         (id, title, start_datetime, end_datetime, location, description, max_registrations, available_seats) = results
 
+        event_id = create_master_uuid(id, 'planning')
+
         # Extract date and time components
         event_date = start_datetime.date()
         start_time = start_datetime.time()
@@ -182,7 +203,7 @@ def publish_event_xml(results):
         elements = [
             ('routing_key', 'event.planning'),
             ('crud_operation', 'create'),
-            ('id', str(id)),
+            ('id', str(event_id)),
             ('title', str(title)),
             ('date', str(event_date)),
             ('start_time', str(start_time)),
