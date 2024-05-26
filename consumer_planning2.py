@@ -649,17 +649,22 @@ def save_company_to_database(root_element):
 
 def handle_event(root_element):
     try:
-        crud_operation = root_element.find('crud_operation').text
-        id_elem = root_element.find('id')
+        # Extract the CRUD operation
+        crud_operation = root_element.find('crud_operation').text if root_element.find('crud_operation') is not None else None
 
         if crud_operation not in ['create', 'update', 'delete']:
             logger.error(f"Invalid CRUD operation: {crud_operation}")
             return
         
-        if id_elem is None:
+        # Extract the event ID
+        id_elem = root_element.find('id')
+        event_id = id_elem.text if id_elem is not None else None
+
+        if event_id is None:
             logger.error("Event ID not provided.")
             return
 
+        # Get the database connection
         conn = get_database_connection()
         if conn is None:
             logger.error("Database connection failed. Unable to perform the operation.")
@@ -668,19 +673,30 @@ def handle_event(root_element):
         cursor = conn.cursor()
 
         if crud_operation == 'create':
-            summary = root_element.find('title')
-            start_datetime = root_element.find('start_datetime')
-            end_datetime = root_element.find('end_datetime')
-            location = root_element.find('location')
-            description = root_element.find('description')
-            max_registrations = root_element.find('max_registrations')
-            available_seats = root_element.find('available_seats')
-            sql = "INSERT INTO Events (summary, start_datetime, end_datetime, location, description, max_registrations, available_seats) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+            # Extract event details
+            summary = root_element.find('title').text if root_element.find('title') is not None else None
+            start_datetime = root_element.find('start_datetime').text if root_element.find('start_datetime') is not None else None
+            end_datetime = root_element.find('end_datetime').text if root_element.find('end_datetime') is not None else None
+            location = root_element.find('location').text if root_element.find('location') is not None else None
+            description = root_element.find('description').text if root_element.find('description') is not None else None
+            max_registrations = root_element.find('max_registrations').text if root_element.find('max_registrations') is not None else None
+            available_seats = root_element.find('available_seats').text if root_element.find('available_seats') is not None else None
+
+            # Ensure numeric values are properly converted
+            max_registrations = int(max_registrations) if max_registrations is not None else None
+            available_seats = int(available_seats) if available_seats is not None else None
+
+            # Insert event data into the database
+            sql = """
+                INSERT INTO Events (summary, start_datetime, end_datetime, location, description, max_registrations, available_seats)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """
             values = (summary, start_datetime, end_datetime, location, description, max_registrations, available_seats)
             cursor.execute(sql, values)
             conn.commit()
-            logger.info("Event data succesfully saved to database")
+            logger.info("Event data successfully saved to database")
 
+        # Close the cursor and connection
         cursor.close()
         conn.close()
 
