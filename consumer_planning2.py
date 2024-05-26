@@ -647,6 +647,46 @@ def save_company_to_database(root_element):
         logger.error(f"Error saving company data to database: {str(e)}")
 
 
+def handle_event(root_element):
+    try:
+        crud_operation = root_element.find('crud_operation').text
+        id_elem = root_element.find('id')
+
+        if crud_operation not in ['create', 'update', 'delete']:
+            logger.error(f"Invalid CRUD operation: {crud_operation}")
+            return
+        
+        if id_elem is None:
+            logger.error("Event ID not provided.")
+            return
+
+        conn = get_database_connection()
+        if conn is None:
+            logger.error("Database connection failed. Unable to perform the operation.")
+            return
+        
+        cursor = conn.cursor()
+
+        if crud_operation == 'create':
+            summary = root_element.find('title')
+            start_datetime = root_element.find('start_datetime')
+            end_datetime = root_element.find('end_datetime')
+            location = root_element.find('location')
+            description = root_element.find('description')
+            max_registrations = root_element.find('max_registrations')
+            available_seats = root_element.find('available_seats')
+            sql = "INSERT INTO Events (summary, start_datetime, end_datetime, location, description, max_registrations, available_seats) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+            values = (summary, start_datetime, end_datetime, location, description, max_registrations, available_seats)
+            cursor.execute(sql, values)
+            conn.commit()
+            logger.info("Event data succesfully saved to database")
+
+        cursor.close()
+        conn.close()
+
+    except Exception as e:
+        logger.error(f"Error saving event data to database: {str(e)}")
+
 #Function to extract attendance data and funtioncall to system
 def send_attendance_to_system(root_element):
     try:
