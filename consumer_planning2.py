@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import pika
 from lxml import etree
@@ -650,6 +651,75 @@ def save_company_to_database(root_element):
         logger.error(f"Error saving company data to database: {str(e)}")
 
 
+def handle_event(root_element):
+    try:
+        # Extract the CRUD operation
+        crud_operation = root_element.find('crud_operation').text if root_element.find('crud_operation') is not None else None
+
+        if crud_operation not in ['create', 'update', 'delete']:
+            logger.error(f"Invalid CRUD operation: {crud_operation}")
+            return
+        
+        # Extract the event ID
+        id_elem = root_element.find('id')
+        event_id = id_elem.text if id_elem is not None else None
+
+        if event_id is None:
+            logger.error("Event ID not provided.")
+            return
+
+        # Get the database connection
+        conn = get_database_connection()
+        if conn is None:
+            logger.error("Database connection failed. Unable to perform the operation.")
+            return
+        
+        cursor = conn.cursor()
+
+        if crud_operation == 'create':
+            # Extract event details
+            summary = root_element.find('title').text if root_element.find('title') is not None else None
+            date = root_element.find('date').text if root_element.find('date') is not None else None
+            start_time = root_element.find('start_time').text if root_element.find('start_time') is not None else None
+            end_time = root_element.find('end_time').text if root_element.find('end_time') is not None else None
+            location = root_element.find('location').text if root_element.find('location') is not None else None
+            description = root_element.find('description').text if root_element.find('description') is not None else None
+            max_registrations = root_element.find('max_registrations').text if root_element.find('max_registrations') is not None else None
+            available_seats = root_element.find('available_seats').text if root_element.find('available_seats') is not None else None
+
+            # Ensure numeric values are properly converted
+            max_registrations = int(max_registrations) if max_registrations is not None else None
+            available_seats = int(available_seats) if available_seats is not None else None
+
+            # Compose start_datetime and end_datetime
+            start_datetime = None
+            end_datetime = None
+            if date and start_time:
+                start_datetime = datetime.strptime(f"{date} {start_time}", "%Y-%m-%d %H:%M:%S")
+            if date and end_time:
+                end_datetime = datetime.strptime(f"{date} {end_time}", "%Y-%m-%d %H:%M:%S")
+            # Insert event data into the database
+            sql = """
+                INSERT INTO Events (summary, start_datetime, end_datetime, location, description, max_registrations, available_seats)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """
+            values = (summary, start_datetime, end_datetime, location, description, max_registrations, available_seats)
+            cursor.execute(sql, values)
+            conn.commit()
+
+            cursor.execute("SELECT LAST_INSERT_ID()")
+            service_event_id = cursor.fetchone()[0]
+            logger.info("Event data successfully saved to database")
+
+            add_service_id(event_id, 'planning', service_event_id)
+
+        # Close the cursor and connection
+        cursor.close()
+        conn.close()
+
+    except Exception as e:
+        logger.error(f"Error saving event data to database: {str(e)}")
+
 #Function to extract attendance data and funtioncall to system
 def send_attendance_to_system(root_element):
     try:
@@ -681,6 +751,8 @@ def callback(ch, method, properties, body):
                 save_company_to_database(root_element)
             elif xml_type == 'attendance':
                 send_attendance_to_system(root_element)
+            elif xml_type == 'event':
+                handle_event(root_element)
             else:
                 print(f"No handler defined for XML type: {xml_type}")
         else:
