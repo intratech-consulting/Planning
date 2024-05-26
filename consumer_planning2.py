@@ -718,6 +718,8 @@ def callback(ch, method, properties, body):
                 save_company_to_database(root_element)
             elif xml_type == 'attendance':
                 send_attendance_to_system(root_element)
+            elif xml_type == 'event':
+                handle_event(root_element)
             else:
                 print(f"No handler defined for XML type: {xml_type}")
         else:
