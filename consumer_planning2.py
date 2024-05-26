@@ -703,7 +703,12 @@ def handle_event(root_element):
             values = (summary, start_datetime, end_datetime, location, description, max_registrations, available_seats)
             cursor.execute(sql, values)
             conn.commit()
+
+            cursor.execute("SELECT LAST_INSERT_ID()")
+            service_event_id = cursor.fetchone()[0]
             logger.info("Event data successfully saved to database")
+
+            add_service_id(event_id, 'planning', service_event_id)
 
         # Close the cursor and connection
         cursor.close()
