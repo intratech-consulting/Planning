@@ -600,11 +600,13 @@ def save_company_to_database(root_element):
             sql = "DELETE FROM Company WHERE CompanyId = %s"
             cursor.execute(sql, (company_id,))
             conn.commit()
+            delete_service_id(company_id,'planning')
             logger.info(f"Company data with ID '{company_id}' deleted successfully.")
         
         else:  # For create and update operations
             name_elem = root_element.find('name')
             email_elem = root_element.find('email')
+            
 
             if name_elem is None or email_elem is None:
                 logger.error("One or more required elements (name, email) are missing in the XML.")
@@ -618,6 +620,7 @@ def save_company_to_database(root_element):
                 values = (company_id, name, email)
                 cursor.execute(sql, values)
                 conn.commit()
+                add_service_id(company_id, 'planning', company_id)
                 logger.info("Company data saved to the database successfully.")
             
             elif crud_operation == 'update':
