@@ -126,6 +126,73 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
     except Exception as e:
         logger.error("An error occurred: %s", e)
 
+def fetch_event_by_id(event_id, mysql_connection):
+    try:
+        cursor = mysql_connection.cursor(dictionary=True)
+        query = "SELECT * FROM Events WHERE Id = %s"
+        cursor.execute(query, (event_id,))
+        event = cursor.fetchone()
+        cursor.close()
+        if event:
+            logger.info("Event fetched from MySQL database: %s", event)
+        else:
+            logger.warning("No event found with ID: %s", event_id)
+        return event
+    except mysql.connector.Error as e:
+        logger.error("Error fetching event from MySQL: %s", e)
+        return None
+
+def add_event_to_google_calendar(event_id):
+     
+    creds = service_account.Credentials.from_service_account_info(
+        {
+            "type": "service_account",
+            "project_id": os.getenv("PROJECT_ID"),
+            "private_key_id": os.getenv("PRIVATE_KEY_ID"),
+            "private_key": os.getenv("PRIVATE_KEY").replace("\\n", "\n"),
+            "client_email": os.getenv("CLIENT_EMAIL"),
+            "client_id": os.getenv("CLIENT_ID"),
+            "auth_uri": os.getenv("AUTH_URI"),
+            "token_uri": os.getenv("TOKEN_URI"),
+            "auth_provider_x509_cert_url": os.getenv("AUTH_PROVIDER_X509_CERT_URL"),
+            "client_x509_cert_url": os.getenv("CLIENT_X509_CERT_URL"),
+            "universe_domain": os.getenv("UNIVERSE_DOMAIN")
+        },
+        scopes=SCOPES
+    )
+
+    service = build('calendar', 'v3', credentials=creds)
+    calendar_id = "9ecbb3026111b91a9ce21bfed88d67b95783a5a418c6d82aaa220776eb70f5d3@group.calendar.google.com"
+    # Connect to MySQL
+    mysql_connection = connect_to_mysql()
+    if mysql_connection is None:
+        exit()
+    event = fetch_event_by_id(event_id, mysql_connection)
+    if not event:
+        logger.error("Event with ID %s not found in the database", event_id)
+        return
+
+    # Construct the event data to be added to Google Calendar
+    google_event = {
+        'summary': event['summary'],
+        'location': event['location'],
+        'description': event['description'],
+        'start': {
+            'dateTime': event['start_datetime'].isoformat()+ 'Z',
+        },
+        'end': {
+            'dateTime': event['end_datetime'].isoformat()+ 'Z',
+        },
+        'timeZone': 'Europe/Brussels',
+    }
+
+    try:
+        service.events().insert(calendarId=calendar_id, body=google_event).execute()
+        logger.info('Event created')
+    except Exception as e:
+        logger.error("Error adding event to Google Calendar: %s", e)
+
+
 if __name__ == "__main__":
     # Set start date to today and end date to 3 weeks after
     start_date = datetime.datetime.now()
@@ -156,5 +223,6 @@ if __name__ == "__main__":
     if mysql_connection is None:
         exit()
 
+    add_event_to_google_calendar(3)
     # Fetch events
     fetch_events(service, start_date, end_date, mysql_connection)
