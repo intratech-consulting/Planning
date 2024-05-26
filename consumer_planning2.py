@@ -1,3 +1,4 @@
+import datetime
 import os
 import pika
 from lxml import etree
@@ -675,8 +676,9 @@ def handle_event(root_element):
         if crud_operation == 'create':
             # Extract event details
             summary = root_element.find('title').text if root_element.find('title') is not None else None
-            start_datetime = root_element.find('start_datetime').text if root_element.find('start_datetime') is not None else None
-            end_datetime = root_element.find('end_datetime').text if root_element.find('end_datetime') is not None else None
+            date = root_element.find('date').text if root_element.find('date') is not None else None
+            start_time = root_element.find('start_time').text if root_element.find('start_time') is not None else None
+            end_time = root_element.find('end_time').text if root_element.find('end_time') is not None else None
             location = root_element.find('location').text if root_element.find('location') is not None else None
             description = root_element.find('description').text if root_element.find('description') is not None else None
             max_registrations = root_element.find('max_registrations').text if root_element.find('max_registrations') is not None else None
@@ -686,6 +688,13 @@ def handle_event(root_element):
             max_registrations = int(max_registrations) if max_registrations is not None else None
             available_seats = int(available_seats) if available_seats is not None else None
 
+            # Compose start_datetime and end_datetime
+            start_datetime = None
+            end_datetime = None
+            if date and start_time:
+                start_datetime = datetime.strptime(f"{date} {start_time}", "%Y-%m-%d %H:%M:%S")
+            if date and end_time:
+                end_datetime = datetime.strptime(f"{date} {end_time}", "%Y-%m-%d %H:%M:%S")
             # Insert event data into the database
             sql = """
                 INSERT INTO Events (summary, start_datetime, end_datetime, location, description, max_registrations, available_seats)
