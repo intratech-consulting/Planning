@@ -4,20 +4,33 @@ import time
 from datetime import datetime
 import logging
 from dotenv import load_dotenv
+
 TEAM = 'planning'
 load_dotenv()
 
-def main(timestamp):
+# Configure logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler('heartbeat.log')
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+def connect_to_rabbitmq():
+    credentials = pika.PlainCredentials(os.getenv('RABBITMQ_USER'), os.getenv('RABBITMQ_PASSWORD'))
+    parameters = pika.ConnectionParameters(host=os.getenv('RABBITMQ_HOST'), credentials=credentials)
+    while True:
+        try:
+            connection = pika.BlockingConnection(parameters)
+            logger.info('Connected to RabbitMQ')
+            return connection
+        except pika.exceptions.AMQPConnectionError:
+            logger.error('Failed to connect to RabbitMQ, retrying in 5 seconds...')
+            time.sleep(5)
+
+def main(timestamp, channel):
     global TEAM
-    logger = logging.getLogger(__name__)
-    # Create a file handler
-    handler = logging.FileHandler('heartbeat.log')
-    handler.setLevel(logging.INFO)
-    # Create a logging format
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    # Add the handler to the logger
-    logger.addHandler(handler)
     # Define your XML and XSD as strings
     heartbeat_xml = f'''
     <Heartbeat>
@@ -49,15 +62,23 @@ def main(timestamp):
         logger.info('XML is valid')
     else:
         logger.error('XML is not valid')
-    credentials = pika.PlainCredentials(os.getenv('RABBITMQ_USER'), os.getenv('RABBITMQ_PASSWORD'))
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=os.getenv('RABBITMQ_HOST'), credentials=credentials))
-    channel = connection.channel()
-    channel.queue_declare(queue='heartbeat_queue', durable=True)
-    channel.basic_publish(exchange='', routing_key='heartbeat_queue', body=heartbeat_xml)
+        return
+    
+    # Publish to RabbitMQ
+    try:
+        channel.basic_publish(exchange='', routing_key='heartbeat_queue', body=heartbeat_xml)
+        logger.info('Heartbeat message sent')
+    except pika.exceptions.AMQPConnectionError:
+        logger.error('Failed to send heartbeat message, connection error')
+
 if __name__ == '__main__':
     try:
+        connection = connect_to_rabbitmq()
+        channel = connection.channel()
+        channel.queue_declare(queue='heartbeat_queue', durable=True)
+        
         while True:
-            main(datetime.now())
+            main(datetime.now(), channel)
             time.sleep(1)
     except KeyboardInterrupt:
         print('Interrupted')
@@ -65,4 +86,9 @@ if __name__ == '__main__':
             sys.exit(0)
         except SystemExit:
             os._exit(0)
+    except pika.exceptions.AMQPConnectionError:
+        logger.error('Lost connection to RabbitMQ, attempting to reconnect...')
+        connection = connect_to_rabbitmq()
+        channel = connection.channel()
+        channel.queue_declare(queue='heartbeat_queue', durable=True)
             
