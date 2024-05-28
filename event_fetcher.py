@@ -77,12 +77,13 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
             if events:
                 try:
                     cursor = mysql_connection.cursor()
-                    insert_query = "INSERT INTO Events (summary, start_datetime, end_datetime, location, description, max_registrations, available_seats) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+                    insert_query = "INSERT INTO Events (speaker_email, summary, start_datetime, end_datetime, location, description, max_registrations, available_seats) VALUES (%s, %s, %s, %s, %s, %s, %s)"
                     for event in events:
                         summary = event['summary']
                         start = event['start'].get('dateTime', event['start'].get('date'))
                         end = event['end'].get('dateTime', event['end'].get('date'))
                         location_with_max = event.get('location', 'N/A')
+                        speaker_email = event.get('attendees')
                         # Split location to extract location and max_registrations
                         location_parts = location_with_max.split('-')
                         location = location_parts[0].strip() if len(location_parts) >= 1 else 'N/A'  # Extract location
@@ -96,8 +97,8 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
 
                         if event_count == 0:
                             # Insert event into MySQL table if it doesn't exist
-                            cursor.execute(insert_query, (summary, start, end, location, description, max_registrations, available_seats))
-                            retrieve_event_id_query = "SELECT Id, Summary, Start_datetime, End_datetime, Location, Description, Max_Registrations, Available_Seats FROM Events WHERE summary = %s"
+                            cursor.execute(insert_query, (speaker_email, summary, start, end, location, description, max_registrations, available_seats))
+                            retrieve_event_id_query = "SELECT * FROM Events WHERE summary = %s"
                             # Check if the event exists in the MySQL table
                             cursor.execute(retrieve_event_id_query, (summary,))
                             result = cursor.fetchone()
@@ -184,6 +185,9 @@ def add_event_to_google_calendar(event_id):
             'dateTime': event['end_datetime'].isoformat()+ 'Z',
         },
         'timeZone': 'Europe/Brussels',
+        'attendees': [
+        {'email': attendee_email} for attendee_email in event['attendees']
+    ],
     }
 
     try:
