@@ -426,6 +426,19 @@ def delete_service_id(master_uuid, service):
     else:
         return None
     
+
+def get_master_uuid(service_id, service_name):
+    url = f"http://{os.getenv('RABBITMQ_HOST')}:6000/getMasterUuid"
+    payload = {
+        "ServiceId": service_id,
+        "Service": service_name
+    }
+    response = requests.post(url, headers=headers, data=json.dumps(payload))
+    if response.status_code == 200:
+        return response.json().get("UUID")
+    else:
+        return None
+    
 # Function to validate XML against embedded XSD schema
 def validate_xml(xml_str):
     try:
