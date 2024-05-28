@@ -427,15 +427,15 @@ def delete_service_id(master_uuid, service):
         return None
     
 
-def get_master_uuid(service_id, service_name):
-    url = f"http://{os.getenv('RABBITMQ_HOST')}:6000/getMasterUuid"
+def get_service_id(master_uuid, service_name):
+    url = f"http://{os.getenv('RABBITMQ_HOST')}:6000/getServiceId"
     payload = {
-        "ServiceId": service_id,
+        "MASTERUUID": master_uuid,
         "Service": service_name
     }
     response = requests.post(url, headers=headers, data=json.dumps(payload))
     if response.status_code == 200:
-        return response.json().get("UUID")
+        return response.json()[service_name]
     else:
         return None
     
@@ -738,6 +738,8 @@ def send_attendance_to_system(root_element):
     try:
         user_id = root_element.find('user_id').text
         event_id = root_element.find('event_id').text
+
+        
         
         # Call function to add event to calendar using extracted user_id and event_id
         calendar_events.add_event_to_calendar(user_id, event_id)
