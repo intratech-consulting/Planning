@@ -191,7 +191,7 @@ def get_user_and_company_ids(speaker_email):
     )
 
     cursor = conn.cursor()
-    query = "SELECT user_id, company_id FROM users WHERE email = %s"
+    query = "SELECT user_id, company_id FROM User WHERE email = %s"
     cursor.execute(query, (speaker_email,))
     result = cursor.fetchone()
     cursor.close()
