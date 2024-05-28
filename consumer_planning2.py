@@ -9,6 +9,7 @@ import logging
 import sys
 import requests
 import json
+import publisher_planning
 
 # Create a custom logger
 logger = logging.getLogger(__name__)
@@ -473,6 +474,7 @@ def get_database_connection():
         )
         logger.debug(connection)
         logger.info(connection)  # This line is not recommended; use it for debugging only
+        publisher_planning.sendLogsToMonitoring("connection_to_database_consumer", connection, False)
 
         return connection  # Return the connection object if successful
     except Exception as e:
@@ -511,6 +513,8 @@ def save_user_to_database(root_element):
                 cursor.close()
                 conn.close()
                 logger.info(f"User data with ID '{user_id}' deleted successfully.")
+                logs = f"User data with ID '{user_id}' deleted successfully."
+                publisher_planning.sendLogsToMonitoring("User_deleted", logs, False)
                 delete_service_id(user_id,'planning')
             else:
                 logger.error("Database connection failed. Unable to delete user data.")
@@ -550,6 +554,8 @@ def save_user_to_database(root_element):
                     cursor.execute(sql, values)
                     conn.commit()
                     logger.info("User data saved to the database successfully.")
+                    log_create = "User data saved to the database successfully."
+                    publisher_planning.sendLogsToMonitoring("User_created", log_create, False)
                 elif crud_operation == 'update':
                     select_user = "SELECT First_name, Last_name, Email, CompanyId FROM User WHERE UserId = %s"
                     cursor.execute(select_user, (user_id,))
@@ -570,6 +576,8 @@ def save_user_to_database(root_element):
                 cursor.execute(sql, values)
                 conn.commit()
                 logger.info(f"User data with ID '{user_id}' updated successfully.")
+                log_update = f"User data with ID '{user_id}' updated successfully."
+                publisher_planning.sendLogsToMonitoring("User_updated", log_update, False)
 
 
                 cursor.close()
@@ -616,6 +624,8 @@ def save_company_to_database(root_element):
             conn.commit()
             delete_service_id(company_id,'planning')
             logger.info(f"Company data with ID '{company_id}' deleted successfully.")
+            log_delete = f"Company data with ID '{company_id}' deleted successfully."
+            publisher_planning.sendLogsToMonitoring("Company_Deleted", log_delete, False)
         
         else:  # For create and update operations
             name_elem = root_element.find('name')
@@ -636,6 +646,8 @@ def save_company_to_database(root_element):
                 conn.commit()
                 add_service_id(company_id, 'planning', company_id)
                 logger.info("Company data saved to the database successfully.")
+                log_create = "Company data saved to the database successfully."
+                publisher_planning.sendLogsToMonitoring("Company_created", log_create, False)
             
             elif crud_operation == 'update':
                 select_company = "SELECT Name, Email FROM Company WHERE CompanyId = %s"
@@ -656,6 +668,8 @@ def save_company_to_database(root_element):
                     cursor.execute(sql, values)
                     conn.commit()
                     logger.info(f"Company data with ID '{company_id}' updated successfully.")
+                    log_update = f"Company data with ID '{company_id}' updated successfully."
+                    publisher_planning.sendLogsToMonitoring("Company_updated", log_update, False)
 
         cursor.close()
         conn.close()
@@ -747,6 +761,8 @@ def send_attendance_to_system(root_element):
         calendar_events.add_event_to_calendar(user_id, event_id)
         
         print("Event added to calendar successfully.")
+        log = "Event added to calendar successfully."
+        publisher_planning.sendLogsToMonitoring("Send_attendance", log, False)
     except Exception as e:
         print(f"Error adding event to calendar: {str(e)}")
 
