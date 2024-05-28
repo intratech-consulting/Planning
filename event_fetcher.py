@@ -77,7 +77,7 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
             if events:
                 try:
                     cursor = mysql_connection.cursor()
-                    insert_query = "INSERT INTO Events (speaker_email, summary, start_datetime, end_datetime, location, description, max_registrations, available_seats) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+                    insert_query = "INSERT INTO Events (speaker_email, summary, start_datetime, end_datetime, location, description, max_registrations, available_seats) VALUES (%s,%s, %s, %s, %s, %s, %s, %s)"
                     for event in events:
                         summary = event['summary']
                         start = event['start'].get('dateTime', event['start'].get('date'))
