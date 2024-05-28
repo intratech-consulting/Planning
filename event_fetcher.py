@@ -83,7 +83,7 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
                         start = event['start'].get('dateTime', event['start'].get('date'))
                         end = event['end'].get('dateTime', event['end'].get('date'))
                         location_with_max = event.get('location', 'N/A')
-                        speaker_email = event.get('attendees')
+                        speaker_email = event.get('attendees', [0])
                         # Split location to extract location and max_registrations
                         location_parts = location_with_max.split('-')
                         location = location_parts[0].strip() if len(location_parts) >= 1 else 'N/A'  # Extract location
