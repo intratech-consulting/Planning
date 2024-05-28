@@ -228,7 +228,5 @@ if __name__ == "__main__":
     mysql_connection = connect_to_mysql()
     if mysql_connection is None:
         exit()
-
-    add_event_to_google_calendar(3)
     # Fetch events
     fetch_events(service, start_date, end_date, mysql_connection)
