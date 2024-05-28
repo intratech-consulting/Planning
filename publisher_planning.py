@@ -100,7 +100,7 @@ def fetch_event_data(event_id):
 
     # Fetch event data based on event_id
     query = """
-        SELECT Id, Summary, Start_datetime, End_datetime, Location, Description, Max_Registrations, Available_Seats
+        SELECT Id, Speaker_email, Summary, Start_datetime, End_datetime, Location, Description, Max_Registrations, Available_Seats
         FROM Events
         WHERE id = %s
     """
@@ -189,7 +189,7 @@ def publish_event_xml(results):
     # event_data = fetch_event_data(event_id)
 
     if results:
-        (id, title, start_datetime, end_datetime, location, description, max_registrations, available_seats) = results
+        (id, speaker_email, title, start_datetime, end_datetime, location, description, max_registrations, available_seats) = results
 
         event_id = create_master_uuid(id, 'planning')
 
