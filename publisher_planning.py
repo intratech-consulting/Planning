@@ -244,7 +244,7 @@ def sendLogsToMonitoring(functionName, logMessage, isError):
 
     # Define elements with provided values
     elements = [
-        ('SystemName', 'ExampleSystem'),
+        ('SystemName', 'Planning'),
         ('FunctionName', str(functionName)),
         ('Logs', str(logMessage)),
         ('Error', 'true' if isError else 'false'),
