@@ -70,6 +70,7 @@ def create_tables():
         """
         CREATE TABLE IF NOT EXISTS Events (
             Id INT AUTO_INCREMENT PRIMARY KEY,
+            Speaker_email VARCHAR(255),
             Summary VARCHAR(255),
             Start_datetime DATETIME,
             End_datetime DATETIME,
