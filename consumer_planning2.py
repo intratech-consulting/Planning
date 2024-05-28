@@ -736,9 +736,11 @@ def handle_event(root_element):
 #Function to extract attendance data and funtioncall to system
 def send_attendance_to_system(root_element):
     try:
-        user_id = root_element.find('user_id').text
-        event_id = root_element.find('event_id').text
+        master_user_id = root_element.find('user_id').text
+        master_event_id = root_element.find('event_id').text
 
+        user_id = get_service_id(master_user_id, 'planning')
+        event_id = get_service_id(master_event_id, 'planning')
         
         
         # Call function to add event to calendar using extracted user_id and event_id
