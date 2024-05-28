@@ -175,6 +175,8 @@ def publish_user_xml(user_id):
         publish_xml_message('amq.topic', 'user.planning', xml_str)
         
         print(f"XML message published to RabbitMQ for user_id: {user_id}")
+        log = f"XML message published to RabbitMQ for user_id: {user_id}"
+        sendLogsToMonitoring("Publish_user_object", log, False)
     else:
         print(f"User with user_id '{user_id}' not found in the database.")
 
