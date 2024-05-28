@@ -180,6 +180,25 @@ def publish_user_xml(user_id):
     else:
         print(f"User with user_id '{user_id}' not found in the database.")
 
+def get_user_and_company_ids(speaker_email):
+    # SQL query to get user_id and company_id from the users table using speaker_email
+    conn = mysql.connector.connect(
+        host=os.getenv('DB_HOST'),
+        port=os.getenv('DB_PORT', 3306),
+        user=os.getenv('DB_USER'),
+        password=os.getenv('DB_PASSWORD'),
+        database=os.getenv('DB_DATABASE')
+    )
+
+    cursor = conn.cursor()
+    query = "SELECT user_id, company_id FROM users WHERE email = %s"
+    cursor.execute(query, (speaker_email,))
+    result = cursor.fetchone()
+    cursor.close()
+    if result:
+        return result[0], result[1]  # user_id, company_id
+    else:
+        return None, None
 # Function to publish XML event object to RabbitMQ
 def publish_event_xml(results):
     logger.info("Entered Publisher")
@@ -217,10 +236,12 @@ def publish_event_xml(results):
         for elem_name, elem_value in elements:
             ET.SubElement(event_elem, elem_name).text = elem_value
 
+        # Fetch user_id and company_id using speaker_email
+        user_id, company_id = get_user_and_company_ids(speaker_email)
         # Add speaker element with sub-elements between location and max_registrations
         speaker_elem = ET.SubElement(event_elem, 'speaker')
-        ET.SubElement(speaker_elem, 'user_id').text = ''
-        ET.SubElement(speaker_elem, 'company_id').text = ''
+        ET.SubElement(speaker_elem, 'user_id').text = user_id
+        ET.SubElement(speaker_elem, 'company_id').text = company_id
 
         # Add max_registrations and available_seats elements
         ET.SubElement(event_elem, 'max_registrations').text = str(max_registrations)
