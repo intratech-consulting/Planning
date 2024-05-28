@@ -85,7 +85,6 @@ def fetch_events(calendar_service, start_date, end_date, mysql_connection, inter
                         location_with_max = event.get('location', 'N/A')
                         attendees = event.get('attendees', [])
                         speaker_email = attendees[0]['email'] if attendees else 'N/A'  # Assuming first attendee is the speaker
-                        logger.info("Speaker Email: %s", speaker_email )
                         # Split location to extract location and max_registrations
                         location_parts = location_with_max.split('-')
                         location = location_parts[0].strip() if len(location_parts) >= 1 else 'N/A'  # Extract location
