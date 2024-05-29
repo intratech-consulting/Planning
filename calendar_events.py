@@ -230,6 +230,65 @@ def add_event_to_calendar(user_id, event_id):
     mysql_connection.close()
 
 
+def delete_event_from_calendar(user_id, event_id):
+    # Set up Google Calendar API credentials
+    creds = service_account.Credentials.from_service_account_info(
+        {
+            "type": "service_account",
+            "project_id": os.getenv("PROJECT_ID"),
+            "private_key_id": os.getenv("PRIVATE_KEY_ID"),
+            "private_key": os.getenv("PRIVATE_KEY").replace("\\n", "\n"),
+            "client_email": os.getenv("CLIENT_EMAIL"),
+            "client_id": os.getenv("CLIENT_ID"),
+            "auth_uri": os.getenv("AUTH_URI"),
+            "token_uri": os.getenv("TOKEN_URI"),
+            "auth_provider_x509_cert_url": os.getenv("AUTH_PROVIDER_X509_CERT_URL"),
+            "client_x509_cert_url": os.getenv("CLIENT_X509_CERT_URL"),
+            "universe_domain": os.getenv("UNIVERSE_DOMAIN")
+        },
+        scopes=SCOPES
+    )
+    service = build('calendar', 'v3', credentials=creds)
+
+    # MySQL Connection
+    mysql_connection = connect_to_mysql()
+    if mysql_connection is None:
+        return None
+
+    # Fetch calendar_id associated with user_id
+    cursor = mysql_connection.cursor()
+    select_query = "SELECT CalendarId FROM User WHERE UserId = %s"
+    cursor.execute(select_query, (user_id,))
+    result = cursor.fetchone()
+    if result and result[0]:
+        calendar_id = result[0]
+    else:
+        print("Calendar ID not found for user with ID:", user_id)
+        cursor.close()
+        mysql_connection.close()
+        return
+
+    # Fetch event details from the database
+    select_query = "SELECT * FROM Events WHERE Id = %s"
+    cursor.execute(select_query, (event_id,))
+    event_details = cursor.fetchone()
+
+    if event_details and event_details[0]:
+        google_event_id = event_details[0]  # Assuming GoogleCalendarEventId is stored in the database
+
+        # Delete event from Google Calendar
+        try:
+            service.events().delete(calendarId=calendar_id, eventId=google_event_id).execute()
+            print(f'Event with id {event_id} deleted from Google Calendar.')
+        except googleapiclient.errors.HttpError as error:
+            print(f'An error occurred: {error}')
+    else:
+        print("Event with id", event_id, "not found in the database or GoogleCalendarEventId is missing.")
+
+    cursor.close()
+    mysql_connection.close()
+
+
 #if __name__ == '__main__':
  #user_id_from_rabbitmq = 'dab9414f-5530-4ddc-920a-1fd74a31c415' # Hardcoded, make it a comment when we use function calls
     #  event_id = 7  # Hardcoded, make it a comment when we use function calls
