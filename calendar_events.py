@@ -276,7 +276,8 @@ def delete_event_from_calendar(user_id, event_id):
 
     if event_details and event_details[0]:
         google_event_id = event_details[0]  # Assuming GoogleCalendarEventId is stored in the database
-
+        logger.info(google_event_id)
+        logger.info(calendar_id)
         # Delete event from Google Calendar
         try:
             service.events().delete(calendarId=calendar_id, eventId=google_event_id).execute()
