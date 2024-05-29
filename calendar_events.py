@@ -284,6 +284,7 @@ def delete_event_from_calendar(user_id, event_id):
             print(f'Event with id {event_id} deleted from Google Calendar.')
         except googleapiclient.errors.HttpError as error:
             print(f'An error occurred: {error}')
+            print(f'Error details: {error.resp.status} - {error.resp.reason}')
     else:
         print("Event with id", event_id, "not found in the database or GoogleCalendarEventId is missing.")
 
