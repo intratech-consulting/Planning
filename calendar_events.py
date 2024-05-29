@@ -208,16 +208,16 @@ def add_event_to_calendar(user_id, event_id):
     if event_details:
         # Construct event body
         event_body = {
-            'summary': event_details[1],  # Assuming summary is at index 1 in the database
+            'summary': event_details[2],  # Assuming summary is at index 1 in the database
             'start': {
-                'dateTime': event_details[2].isoformat()+ 'Z',  # Assuming start datetime is at index 2
+                'dateTime': event_details[3].isoformat()+ 'Z',  # Assuming start datetime is at index 2
             },
             'end': {
-                'dateTime': event_details[3].isoformat()+ 'Z',  # Assuming end datetime is at index 3
+                'dateTime': event_details[4].isoformat()+ 'Z',  # Assuming end datetime is at index 3
             },
             'timeZone': 'Europe/Brussels',
-            'location': event_details[4],  # Assuming location is at index 4
-            'description': event_details[5]  # Assuming description is at index 5
+            'location': event_details[5],  # Assuming location is at index 4
+            'description': event_details[6]  # Assuming description is at index 5
         }
 
         # Insert event into Google Calendar
