@@ -231,7 +231,7 @@ def add_event_to_calendar(user_id, event_id):
     mysql_connection.close()
 
 
-def delete_event_by_summary(user_id, event_summary):
+def delete_event_by_id(user_id, event_id):
     # Authenticate using service account credentials
     creds = service_account.Credentials.from_service_account_info(
         {
@@ -269,6 +269,18 @@ def delete_event_by_summary(user_id, event_summary):
         mysql_connection.close()
         return
 
+    # Fetch event summary from the database using event ID
+    select_event_query = "SELECT Summary FROM Events WHERE Id = %s"
+    cursor.execute(select_event_query, (event_id,))
+    event_result = cursor.fetchone()
+    if event_result and event_result[0]:
+        event_summary = event_result[0]
+    else:
+        logger.error(f"Event summary not found for event ID: {event_id}")
+        cursor.close()
+        mysql_connection.close()
+        return
+
     cursor.close()
     mysql_connection.close()
 
@@ -288,7 +300,6 @@ def delete_event_by_summary(user_id, event_summary):
         logger.info(f"Event with summary '{event_summary}' has been deleted from Google Calendar.")
     else:
         logger.warning(f"No event found with summary '{event_summary}' in Google Calendar.")
-
 
     cursor.close()
     mysql_connection.close()

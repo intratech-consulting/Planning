@@ -758,7 +758,7 @@ def send_attendance_to_system(root_element):
 
         elif crud_operation == 'delete':
             # Call function to delete event from calendar using extracted user_id and event_id
-            calendar_events.delete_event_by_summary(user_id, event_id)
+            calendar_events.delete_event_by_id(user_id, event_id)
             logger.info("Event deleted from calendar successfully.")
             log = "Event deleted from calendar successfully."
             publisher_planning.sendLogsToMonitoring("Delete_attendance", log, False)
