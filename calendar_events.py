@@ -276,17 +276,26 @@ def delete_event_from_calendar(user_id, event_id):
 
     if event_details and event_details[0]:
         google_event_id = event_details[0]  # Assuming GoogleCalendarEventId is stored in the database
-        logger.info(google_event_id)
-        logger.info(calendar_id)
-        # Delete event from Google Calendar
+
+        print(f"Google Calendar Event ID: {google_event_id}")
+
         try:
-            service.events().delete(calendarId=calendar_id, eventId=google_event_id).execute()
-            print(f'Event with id {event_id} deleted from Google Calendar.')
+            # Check if the event exists
+            event = service.events().get(calendarId=calendar_id, eventId=google_event_id).execute()
+            if event:
+                logger.info(f"Event found: {event['summary']}")
+
+                # Delete the event
+                service.events().delete(calendarId=calendar_id, eventId=google_event_id).execute()
+                logger.info(f'Event with id {event_id} deleted from Google Calendar.')
         except googleapiclient.errors.HttpError as error:
-            print(f'An error occurred: {error}')
-            print(f'Error details: {error.resp.status} - {error.resp.reason}')
+            if error.resp.status == 404:
+                logger.error(f'Event with ID {google_event_id} not found.')
+            else:
+                print(f'An error occurred: {error}')
+                print(f'Error details: {error.resp.status} - {error.resp.reason}')
     else:
-        print("Event with id", event_id, "not found in the database or GoogleCalendarEventId is missing.")
+        print(f"Event with id {event_id} not found in the database or GoogleCalendarEventId is missing.")
 
     cursor.close()
     mysql_connection.close()
