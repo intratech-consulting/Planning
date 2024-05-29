@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import mysql.connector
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
+import googleapiclient.errors
 import sys
 import logging
 
