@@ -489,6 +489,11 @@ def save_user_to_database(root_element):
             return
         
         if crud_operation == 'delete':
+            routing_key_elem = root_element.find('routing_key')
+            if routing_key_elem is None or routing_key_elem.text != 'user.facturatie':
+                logger.error("Invalid routing key for delete operation. Expected 'user.facturatie'.")
+                return
+
             if id_elem is None:
                 logger.error("User ID not provided for delete operation.")
                 return
