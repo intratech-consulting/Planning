@@ -746,14 +746,23 @@ def send_attendance_to_system(root_element):
 
         user_id = get_service_id(master_user_id, 'planning')
         event_id = get_service_id(master_event_id, 'planning')
-        
-        
-        # Call function to add event to calendar using extracted user_id and event_id
-        calendar_events.add_event_to_calendar(user_id, event_id)
-        
-        print("Event added to calendar successfully.")
-        log = "Event added to calendar successfully."
-        publisher_planning.sendLogsToMonitoring("Send_attendance", log, False)
+
+        crud_operation = root_element.find('crud_operation').text
+
+        if crud_operation == 'create':
+            # Call function to add event to calendar using extracted user_id and event_id
+            calendar_events.add_event_to_calendar(user_id, event_id)
+            print("Event added to calendar successfully.")
+            log = "Event added to calendar successfully."
+            publisher_planning.sendLogsToMonitoring("Send_attendance", log, False)
+
+        if crud_operation == 'delete':
+            calendar_events.delete_event_from_calendar(user_id, event_id)
+            print("Event deleted from calendar successfully.")
+            log = "Event deleted from calendar successfully."
+            publisher_planning.sendLogsToMonitoring("Delete_attendance", log, False)
+
+
     except Exception as e:
         print(f"Error adding event to calendar: {str(e)}")
 
