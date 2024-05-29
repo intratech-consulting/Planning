@@ -752,19 +752,27 @@ def send_attendance_to_system(root_element):
         if crud_operation == 'create':
             # Call function to add event to calendar using extracted user_id and event_id
             calendar_events.add_event_to_calendar(user_id, event_id)
-            print("Event added to calendar successfully.")
+            logger.info("Event added to calendar successfully.")
             log = "Event added to calendar successfully."
             publisher_planning.sendLogsToMonitoring("Send_attendance", log, False)
 
-        if crud_operation == 'delete':
+        elif crud_operation == 'delete':
+            # Call function to delete event from calendar using extracted user_id and event_id
             calendar_events.delete_event_from_calendar(user_id, event_id)
-            print("Event deleted from calendar successfully.")
+            logger.info("Event deleted from calendar successfully.")
             log = "Event deleted from calendar successfully."
             publisher_planning.sendLogsToMonitoring("Delete_attendance", log, False)
 
+        else:
+            log = f"Invalid CRUD operation: {crud_operation}"
+            logger.error(log)
+            publisher_planning.sendLogsToMonitoring("Invalid_operation", log, True)
 
     except Exception as e:
-        print(f"Error adding event to calendar: {str(e)}")
+        error_message = f"Error processing attendance: {str(e)}"
+        logger.error(error_message)
+        publisher_planning.sendLogsToMonitoring("Error_processing_attendance", error_message, True)
+
 
 # Callback function for consuming messages
 def callback(ch, method, properties, body):
